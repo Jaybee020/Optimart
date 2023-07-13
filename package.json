@@ -1,10 +1,14 @@
 {
   "name": "optimart",
   "version": "0.0.0",
-  "description": "",
+  "description": "NFT marketplace built on the XRP Ledger",
   "main": "index.js",
   "scripts": {
-    "test": "jest tests"
+    "test": "jest --coverage",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/server.ts",
+    "lint": "eslint --cache .",
+    "format": "eslint --fix . && prettier --write .",
+    "prettier": "prettier --config .prettierrc --write ."
   },
   "keywords": [],
   "author": "",
@@ -15,7 +19,15 @@
     "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.44.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-prettier": "^5.0.0",
     "jest": "^29.5.0",
+    "nodemon": "^3.0.1",
+    "prettier": "^3.0.0",
     "ts-jest": "^29.0.5",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.2"
