@@ -33,8 +33,16 @@
     "typescript": "^5.0.2"
   },
   "dependencies": {
+    "@types/cors": "^2.8.13",
+    "@types/morgan": "^1.9.4",
+    "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "xrpl": "^2.7.0"
+    "helmet": "^7.0.0",
+    "http-status": "^1.6.2",
+    "morgan": "^1.10.0",
+    "winston": "^3.10.0",
+    "xrpl": "^2.7.0",
+    "zod": "^3.21.4"
   }
 }
