@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Collections {
+  id String @id @default(cuid())
+  name String 
+  issuer String
+  taxon Int
+  description String
+  nfts NFT[] 
+}
+
+model NFT{
+  id String @id @default(cuid())
+  tokenId String @unique
+  owner String
+  imageUrl String
+  collectionId String
+  attributes Json
+  collection Collections @relation(fields: [collectionId], references: [id],onDelete: Cascade) 
+}
+
+model ListingOffer{
+  id String @id @default(cuid())
+  tokenId String 
+  fromAddr String
+  toAddr String
+  from User @relation(name: "from",fields: [fromAddr],references: [address],onDelete: Cascade)
+  to User @relation(name: "to",fields: [fromAddr],references: [address],onDelete: Cascade)
+  amount Decimal
+  listingId String
+  listing Listing @relation(fields: [listingId],references: [id],onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model AuctionOffer{
+  id String @id @default(cuid())
+  tokenId String 
+  from String
+  to String
+  amount Decimal
+  auctionId String
+  auction Auction @relation(fields: [auctionId],references: [id],onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Listing{
+  id String @id @default(cuid())
+  creatorAddr String
+  creator User @relation(fields: [creatorAddr],references: [address],onDelete: Cascade)
+  tokenId String
+  price Decimal
+  offers ListingOffer[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+
+}
+
+model Auction{
+  id String @id @default(cuid())
+  creatorAddr String
+  creator User @relation(fields: [creatorAddr],references: [address],onDelete: Cascade)
+  tokenId String
+  createdAt DateTime @default(now())
+  duration Decimal  
+  minBid Decimal
+  updatedAt DateTime @updatedAt()
+  bids AuctionOffer[]
+}
+
+model User{
+  id String @id @default(cuid())
+  email String? @unique
+  address String @unique
+  listings Listing[]
+  auctions Auction[]
+  offers ListingOffer[]
+}
