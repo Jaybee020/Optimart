@@ -16,6 +16,8 @@ model User {
   address                String         @unique
   listings               Listing[]
   auctions               Auction[]
+  sentOffers             Offer[]        @relation("sentOffers")
+  receivedOffers         Offer[]        @relation("receivedOffers")
   initiatedListingOffers ListingOffer[] @relation("initiatedListingOffers")
   receievedListingOffers ListingOffer[] @relation("receivedListingOffers")
   initiatedAuctionBids   AuctionBid[]   @relation("initiatedAuctionBids")
@@ -25,12 +27,12 @@ model User {
 model Listing {
   id          String         @id @default(cuid())
   creatorAddr String
-  tokenId     String         @unique
+  nftId       String         @unique
   price       Decimal
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt()
   offers      ListingOffer[]
-  nft         NFT            @relation(fields: [tokenId], references: [tokenId], onDelete: Cascade)
+  nft         NFT            @relation(fields: [tokenId], references: [nftId], onDelete: Cascade)
   creator     User           @relation(fields: [creatorAddr], references: [address], onDelete: Cascade)
 }
 
@@ -38,9 +40,10 @@ model ListingOffer {
   id          String   @id @default(cuid())
   offerorAddr String
   offereeAddr String
-  amount      Decimal
   listingId   String
+  amount      Decimal
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt()
   offeror     User     @relation(name: "initiatedListingOffers", fields: [offerorAddr], references: [address], onDelete: Cascade)
   offeree     User     @relation(name: "receivedListingOffers", fields: [offereeAddr], references: [address], onDelete: Cascade)
   listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
@@ -49,13 +52,13 @@ model ListingOffer {
 model Auction {
   id          String       @id @default(cuid())
   creatorAddr String
-  tokenId     String       @unique
-  createdAt   DateTime     @default(now())
+  nftId       String       @unique
   duration    Decimal
   minBid      Decimal
+  createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt()
   bids        AuctionBid[]
-  nft         NFT          @relation(fields: [tokenId], references: [tokenId], onDelete: Cascade)
+  nft         NFT          @relation(fields: [nftId], references: [tokenId], onDelete: Cascade)
   creator     User         @relation(fields: [creatorAddr], references: [address], onDelete: Cascade)
 }
 
@@ -63,24 +66,38 @@ model AuctionBid {
   id           String   @id @default(cuid())
   bidderAddr   String
   receiverAddr String
-  amount       Decimal
   auctionId    String
+  amount       Decimal
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt()
   auction      Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   bidder       User     @relation(name: "initiatedAuctionBids", fields: [bidderAddr], references: [address], onDelete: Cascade)
   receiver     User     @relation(name: "receivedAuctionBids", fields: [receiverAddr], references: [address], onDelete: Cascade)
 }
 
-model Collection {
-  id          String @id @default(cuid())
-  name        String
-  issuer      String
-  taxon       Int
-  description String
-  nfts        NFT[]
+model Offer {
+  id           String   @id @default(cuid())
+  senderAddr   String
+  receiverAddr String
+  nftId        String
+  amount       Decimal
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt()
+  sender       User     @relation(name: "sentOffers", fields: [senderAddr], references: [address], onDelete: Cascade)
+  receiver     User     @relation(name: "receivedOffers", fields: [receiverAddr], references: [address], onDelete: Cascade)
+  nft          Nft      @relation(fields: [nftId], references: [tokenId], onDelete: Cascade)
 }
 
-model NFT {
+model Collection {
+  id          String @id @default(cuid())
+  taxon       Int
+  name        String
+  issuer      String
+  description String
+  nfts        Nft[]
+}
+
+model Nft {
   id           String     @id @default(cuid())
   tokenId      String     @unique
   owner        String
@@ -89,5 +106,6 @@ model NFT {
   attributes   Json
   listing      Listing?
   auction      Auction?
+  offers       Offer[]
   collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 }
