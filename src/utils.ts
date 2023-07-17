@@ -1,12 +1,14 @@
-const hexStrToStr = (value: string): string => {
-	return Buffer.from(value, 'hex').toString();
-};
 type NFTMetadata = {
 	name: string;
 	imageURL: string;
 	description: string;
 	attributes: string;
 };
+
+const hexStrToStr = (value: string): string => {
+	return Buffer.from(value, 'hex').toString();
+};
+
 const getNFTMetadata = async (uri: string): Promise<NFTMetadata> => {
 	let decodedURI = hexStrToStr(uri);
 
@@ -17,8 +19,11 @@ const getNFTMetadata = async (uri: string): Promise<NFTMetadata> => {
 	}
 
 	const response = await fetch(decodedURI);
-	if (response.headers.get('Content-Type') !== 'application/json') {
-		return {};
+	if (
+		response.status !== 200 ||
+		response.headers.get('Content-Type') !== 'application/json'
+	) {
+		return { name: '', description: '', imageURL: '', attributes: '' };
 	}
 
 	const data = await response.json();
