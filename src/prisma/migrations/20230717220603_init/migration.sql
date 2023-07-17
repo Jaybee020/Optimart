@@ -74,10 +74,11 @@ CREATE TABLE "Offer" (
 -- CreateTable
 CREATE TABLE "Collection" (
     "id" TEXT NOT NULL,
-    "taxon" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
+    "taxon" INTEGER NOT NULL,
     "issuer" TEXT NOT NULL,
     "description" TEXT NOT NULL,
+    "collectionId" TEXT NOT NULL,
 
     CONSTRAINT "Collection_pkey" PRIMARY KEY ("id")
 );
@@ -85,11 +86,12 @@ CREATE TABLE "Collection" (
 -- CreateTable
 CREATE TABLE "Nft" (
     "id" TEXT NOT NULL,
+    "uri" TEXT NOT NULL,
     "tokenId" TEXT NOT NULL,
     "owner" TEXT NOT NULL,
     "imageUrl" TEXT NOT NULL,
-    "collectionId" TEXT NOT NULL,
     "attributes" JSONB NOT NULL,
+    "collectionId" TEXT,
 
     CONSTRAINT "Nft_pkey" PRIMARY KEY ("id")
 );
@@ -107,6 +109,12 @@ CREATE UNIQUE INDEX "Listing_nftId_key" ON "Listing"("nftId");
 CREATE UNIQUE INDEX "Auction_nftId_key" ON "Auction"("nftId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Collection_collectionId_key" ON "Collection"("collectionId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Collection_issuer_taxon_key" ON "Collection"("issuer", "taxon");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Nft_tokenId_key" ON "Nft"("tokenId");
 
 -- AddForeignKey
@@ -116,13 +124,13 @@ ALTER TABLE "Listing" ADD CONSTRAINT "Listing_nftId_fkey" FOREIGN KEY ("nftId") 
 ALTER TABLE "Listing" ADD CONSTRAINT "Listing_creatorAddr_fkey" FOREIGN KEY ("creatorAddr") REFERENCES "User"("address") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ListingOffer" ADD CONSTRAINT "ListingOffer_offerorAddr_fkey" FOREIGN KEY ("offerorAddr") REFERENCES "User"("address") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ListingOffer" ADD CONSTRAINT "ListingOffer_listingId_fkey" FOREIGN KEY ("listingId") REFERENCES "Listing"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ListingOffer" ADD CONSTRAINT "ListingOffer_offereeAddr_fkey" FOREIGN KEY ("offereeAddr") REFERENCES "User"("address") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ListingOffer" ADD CONSTRAINT "ListingOffer_listingId_fkey" FOREIGN KEY ("listingId") REFERENCES "Listing"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ListingOffer" ADD CONSTRAINT "ListingOffer_offerorAddr_fkey" FOREIGN KEY ("offerorAddr") REFERENCES "User"("address") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Auction" ADD CONSTRAINT "Auction_nftId_fkey" FOREIGN KEY ("nftId") REFERENCES "Nft"("tokenId") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -140,13 +148,13 @@ ALTER TABLE "AuctionBid" ADD CONSTRAINT "AuctionBid_bidderAddr_fkey" FOREIGN KEY
 ALTER TABLE "AuctionBid" ADD CONSTRAINT "AuctionBid_receiverAddr_fkey" FOREIGN KEY ("receiverAddr") REFERENCES "User"("address") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Offer" ADD CONSTRAINT "Offer_nftId_fkey" FOREIGN KEY ("nftId") REFERENCES "Nft"("tokenId") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Offer" ADD CONSTRAINT "Offer_senderAddr_fkey" FOREIGN KEY ("senderAddr") REFERENCES "User"("address") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Offer" ADD CONSTRAINT "Offer_receiverAddr_fkey" FOREIGN KEY ("receiverAddr") REFERENCES "User"("address") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Offer" ADD CONSTRAINT "Offer_nftId_fkey" FOREIGN KEY ("nftId") REFERENCES "Nft"("tokenId") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Nft" ADD CONSTRAINT "Nft_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "Collection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Nft" ADD CONSTRAINT "Nft_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "Collection"("collectionId") ON DELETE CASCADE ON UPDATE CASCADE;
