@@ -32,7 +32,7 @@ model Listing {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt()
   offers      ListingOffer[]
-  nft         NFT            @relation(fields: [tokenId], references: [nftId], onDelete: Cascade)
+  nft         Nft            @relation(fields: [nftId], references: [tokenId], onDelete: Cascade)
   creator     User           @relation(fields: [creatorAddr], references: [address], onDelete: Cascade)
 }
 
@@ -58,7 +58,7 @@ model Auction {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt()
   bids        AuctionBid[]
-  nft         NFT          @relation(fields: [nftId], references: [tokenId], onDelete: Cascade)
+  nft         Nft          @relation(fields: [nftId], references: [tokenId], onDelete: Cascade)
   creator     User         @relation(fields: [creatorAddr], references: [address], onDelete: Cascade)
 }
 
