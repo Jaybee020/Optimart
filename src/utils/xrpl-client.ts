@@ -14,6 +14,7 @@ async function getXrplClient(): Promise<Client> {
 
 	return client;
 }
+
 /**
  * Retrieves account information from the XRP Ledger.
  *
