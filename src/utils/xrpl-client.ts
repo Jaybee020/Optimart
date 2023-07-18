@@ -8,12 +8,12 @@ import configuration from '../config/config';
  * @returns A Promise that resolves to the connected XRP Ledger client.
  * @throws {Error} If there's an issue with creating or connecting the client.
  */
-async function getXrplClient(): Promise<Client> {
+const getXrplClient = async (): Promise<Client> => {
 	const client = new Client(configuration.XRPL_NODE_URL);
 	await client.connect();
 
 	return client;
-}
+};
 
 /**
  * Retrieves account information from the XRP Ledger.
@@ -22,8 +22,9 @@ async function getXrplClient(): Promise<Client> {
  * @returns A Promise that resolves to the account information response.
  * @throws {Error} If there's an issue with the XRP Ledger client or the request.
  */
-async function getAccountInfo(address: string): Promise<AccountInfoResponse> {
+const getAccountInfo = async (address: string): Promise<AccountInfoResponse> => {
 	let client: Client | null = null;
+
 	try {
 		client = await getXrplClient();
 		const response = await client.request({
@@ -42,6 +43,6 @@ async function getAccountInfo(address: string): Promise<AccountInfoResponse> {
 
 		throw error;
 	}
-}
+};
 
 export { getAccountInfo };

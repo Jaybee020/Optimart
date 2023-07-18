@@ -3,8 +3,8 @@ import path from 'path';
 
 import { parse } from 'csv-parse';
 
-import prisma from './client';
-import { resolveNFTMetadata } from '../utils/nft-metadata';
+import prisma from '..';
+import { resolveNFTMetadata } from '../../utils/nft-metadata';
 
 /**
  * Validates command-line arguments for a specific use case.
@@ -97,19 +97,13 @@ const dumpNFTsIntoDB = async (csvPath: string): Promise<void> => {
 	await prisma.nft.createMany({ data: nfts });
 };
 
-const [, seedDir] = validateCommandLineArgs(process.argv);
-const issuersSeed = path.join(seedDir, 'issuers.csv');
-const nftsSeed = path.join(seedDir, 'nfts.csv');
-
-prisma.$connect().then(async () => {
-	console.log('Seed DB connected successfully!');
+const main = async (): Promise<void> => {
+	const [, seedDir] = validateCommandLineArgs(process.argv);
+	const issuersSeed = path.join(seedDir, 'issuers.csv');
+	const nftsSeed = path.join(seedDir, 'nfts.csv');
 
 	await dumpIssuersIntoDB(issuersSeed);
-	console.log('Issuers dumped.');
-
 	await dumpNFTsIntoDB(nftsSeed);
-	console.log('NFTs dumped.');
+};
 
-	await prisma.$disconnect();
-	console.log('Seed DB disconnected successfully!');
-});
+main();
