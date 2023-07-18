@@ -3,8 +3,8 @@ import path from 'path';
 
 import { parse } from 'csv-parse';
 
-import prisma from '..';
-import { resolveNFTMetadata } from '../../utils/nft-metadata';
+import { NftService } from '../../utils';
+import prisma from '../index';
 
 /**
  * Validates command-line arguments for a specific use case.
@@ -21,7 +21,7 @@ import { resolveNFTMetadata } from '../../utils/nft-metadata';
  * @returns {string[]} The original array of command-line arguments if they pass
  *                    the validation.
  */
-const validateCommandLineArgs = (args: string[]): string[] => {
+function validateCommandLineArgs(args: string[]): string[] {
 	if (args.length !== 4) {
 		throw new Error('Arguments should be two e.g. `--path /home/johndoe/seeders');
 	}
@@ -35,14 +35,14 @@ const validateCommandLineArgs = (args: string[]): string[] => {
 	}
 
 	return args.splice(2);
-};
+}
 
 /**
  * Loads issuer data from a CSV file and dumps it into the database.
  * @param csvPath - The path to the CSV file containing issuer data.
  * @returns A Promise that resolves once the data is dumped into the database.
  */
-const dumpIssuersIntoDB = async (csvPath: string): Promise<void> => {
+async function dumpIssuersIntoDB(csvPath: string): Promise<void> {
 	const dataToDump = [];
 	const parser = fs.createReadStream(csvPath).pipe(parse({ from: 2 }));
 
@@ -52,14 +52,14 @@ const dumpIssuersIntoDB = async (csvPath: string): Promise<void> => {
 	}
 
 	await prisma.user.createMany({ data: dataToDump, skipDuplicates: true });
-};
+}
 
 /**
  * Loads NFT data from a CSV file and dumps it into the database.
  * @param csvPath - The path to the CSV file containing NFT data.
  * @returns A Promise that resolves once the data is dumped into the database.
  */
-const dumpNFTsIntoDB = async (csvPath: string): Promise<void> => {
+async function dumpNFTsIntoDB(csvPath: string): Promise<void> {
 	const nfts = [];
 	const owners = [];
 	const collections = [];
@@ -68,7 +68,7 @@ const dumpNFTsIntoDB = async (csvPath: string): Promise<void> => {
 	for await (const entry of parser) {
 		const [tokenId, issuer, owner, taxon, , , , uri] = entry;
 		const collectionId = issuer + '-' + taxon;
-		const metadata = await resolveNFTMetadata(tokenId, uri, issuer);
+		const metadata = await NftService.resolveNFTMetadata(tokenId, uri, issuer);
 
 		owners.push({ address: owner });
 
@@ -95,15 +95,15 @@ const dumpNFTsIntoDB = async (csvPath: string): Promise<void> => {
 	await prisma.user.createMany({ data: owners, skipDuplicates: true });
 	await prisma.collection.createMany({ data: collections, skipDuplicates: true });
 	await prisma.nft.createMany({ data: nfts });
-};
+}
 
-const main = async (): Promise<void> => {
+async function main(): Promise<void> {
 	const [, seedDir] = validateCommandLineArgs(process.argv);
 	const issuersSeed = path.join(seedDir, 'issuers.csv');
 	const nftsSeed = path.join(seedDir, 'nfts.csv');
 
 	await dumpIssuersIntoDB(issuersSeed);
 	await dumpNFTsIntoDB(nftsSeed);
-};
+}
 
 main();
