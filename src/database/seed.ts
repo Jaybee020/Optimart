@@ -67,26 +67,24 @@ const dumpNFTsIntoDB = async (csvPath: string): Promise<void> => {
 
 	for await (const entry of parser) {
 		const [tokenId, issuer, owner, taxon, , , , uri] = entry;
+		const collectionId = issuer + '-' + taxon;
 		const metadata = await resolveNFTMetadata(tokenId, uri, issuer);
 
 		owners.push({ address: owner });
-
 		collections.push({
 			name: metadata.name,
 			taxon: parseInt(taxon),
 			issuer: issuer,
-			collectionId: issuer + taxon,
+			collectionId: collectionId,
 			description: metadata.description,
 		});
-
 		nfts.push({
 			uri: uri,
 			owner: owner,
-			taxon: parseInt(taxon),
 			tokenId: tokenId,
 			imageUrl: metadata.imageUrl,
+			collectionId: collectionId,
 			attributes: JSON.stringify(metadata.attributes),
-			collectionId: issuer + taxon,
 		});
 	}
 
