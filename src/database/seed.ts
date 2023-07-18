@@ -1,8 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+
 import { parse } from 'csv-parse';
-import { getNFTMetadata } from '../utils';
+
 import prisma from './client';
+import { resolveNFTMetadata } from '../utils/nft-metadata';
 
 /**
  * Validates command-line arguments for a specific use case.
@@ -21,9 +23,7 @@ import prisma from './client';
  */
 const validateCommandLineArgs = (args: string[]): string[] => {
 	if (args.length !== 4) {
-		throw new Error(
-			'Arguments should be two e.g. `--path /home/johndoe/seeders',
-		);
+		throw new Error('Arguments should be two e.g. `--path /home/johndoe/seeders');
 	}
 
 	if (!['-p', '--path'].includes(args[2])) {
@@ -31,67 +31,77 @@ const validateCommandLineArgs = (args: string[]): string[] => {
 	}
 
 	if (!fs.statSync(path.resolve(args[3])).isDirectory()) {
-		throw new Error(
-			'The second argument provided is not a valid directory',
-		);
+		throw new Error('The second argument provided is not a valid directory');
 	}
 
 	return args.splice(2);
 };
 
+/**
+ * Loads issuer data from a CSV file and dumps it into the database.
+ * @param csvPath - The path to the CSV file containing issuer data.
+ * @returns A Promise that resolves once the data is dumped into the database.
+ */
 const dumpIssuersIntoDB = async (csvPath: string): Promise<void> => {
 	const dataToDump = [];
-	const parser = fs.createReadStream(csvPath).pipe(parse({}));
+	const parser = fs.createReadStream(csvPath).pipe(parse({ from: 2 }));
 
 	for await (const entry of parser) {
-		dataToDump.push({ address: entry[1] });
+		const [, issuer] = entry;
+		dataToDump.push({ address: issuer });
 	}
 
-	prisma.user.createMany({ data: dataToDump });
+	await prisma.user.createMany({ data: dataToDump, skipDuplicates: true });
 };
 
+/**
+ * Loads NFT data from a CSV file and dumps it into the database.
+ * @param csvPath - The path to the CSV file containing NFT data.
+ * @returns A Promise that resolves once the data is dumped into the database.
+ */
 const dumpNFTsIntoDB = async (csvPath: string): Promise<void> => {
+	const nfts = [];
 	const owners = [];
 	const collections = [];
-	const nfts = [];
-	const parser = fs.createReadStream(csvPath).pipe(parse({}));
+	const parser = fs.createReadStream(csvPath).pipe(parse({ from: 2 }));
 
 	for await (const entry of parser) {
-		// store the owner to create a user account later.
-		owners.push({ address: entry[2] });
+		const [tokenId, issuer, owner, taxon, , , , uri] = entry;
+		const metadata = await resolveNFTMetadata(tokenId, uri, issuer);
 
-		// get the ipfs data.
-		const metadata = await getNFTMetadata(entry[7]);
+		owners.push({ address: owner });
 
-		// create a new collection
 		collections.push({
 			name: metadata.name,
-			taxon: entry[3],
-			issuer: entry[1],
-			collectionId: entry[3] + entry[1],
+			taxon: parseInt(taxon),
+			issuer: issuer,
+			collectionId: issuer + taxon,
 			description: metadata.description,
 		});
 
-		// create the nft
 		nfts.push({
-			uri: entry[7],
-			owner: entry[2],
-			taxon: entry[3],
-			tokenId: entry[0],
-			imageUrl: metadata.imageURL,
-			attributes: metadata.attributes,
-			collectionId: entry[3] + entry[1],
+			uri: uri,
+			owner: owner,
+			taxon: parseInt(taxon),
+			tokenId: tokenId,
+			imageUrl: metadata.imageUrl,
+			attributes: JSON.stringify(metadata.attributes),
+			collectionId: issuer + taxon,
 		});
 	}
 
-	prisma.user.createMany({ data: owners, skipDuplicates: true });
-	prisma.collection.createMany({ data: collections, skipDuplicates: true });
-	prisma.nft.createMany({ data: nfts });
+	await prisma.user.createMany({ data: owners, skipDuplicates: true });
+	await prisma.collection.createMany({ data: collections, skipDuplicates: true });
+	await prisma.nft.createMany({ data: nfts });
 };
 
 const [, seedDir] = validateCommandLineArgs(process.argv);
 const issuersSeed = path.join(seedDir, 'issuers.csv');
 const nftsSeed = path.join(seedDir, 'nfts.csv');
 
-dumpIssuersIntoDB(issuersSeed);
-dumpNFTsIntoDB(nftsSeed);
+prisma.$connect().then(async () => {
+	console.log('Seed DB connected successfully!');
+	await dumpIssuersIntoDB(issuersSeed);
+	await dumpNFTsIntoDB(nftsSeed);
+	await prisma.$disconnect();
+});

@@ -1,4 +1,5 @@
 import { Server } from 'http';
+
 import application from './app';
 import configuration from './config/config';
 import logger from './config/logger';

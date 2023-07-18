@@ -1,4 +1,5 @@
 import morgan, { StreamOptions } from 'morgan';
+
 import logger from '../config/logger';
 
 const stream: StreamOptions = {
@@ -10,9 +11,9 @@ const skip = (): boolean => {
 	return env !== 'development';
 };
 
-const middleware = morgan(
-	':method :url :status :res[content-length] - :response-time ms',
-	{ stream, skip },
-);
+const middleware = morgan(':method :url :status :res[content-length] - :response-time ms', {
+	stream,
+	skip,
+});
 
 export default middleware;

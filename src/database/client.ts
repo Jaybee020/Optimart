@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+
 import configuration from '../config/config';
 
 // add prisma to the NodeJS global type
