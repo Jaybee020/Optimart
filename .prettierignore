@@ -12,3 +12,5 @@ tsconfig.json
 
 .gitignore
 .prettierignore
+
+*.yml

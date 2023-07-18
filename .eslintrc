@@ -38,9 +38,11 @@
 		"import/order": [
 			"error",
 			{
-				"groups": ["builtin", "external", "parent", "sibling", "index"],
+				"groups": ["builtin", "external", "internal", ["sibling", "parent"], "index"],
+				"newlines-between": "always",
 				"alphabetize": {
-					"order": "asc"
+					"order": "asc",
+					"caseInsensitive": true
 				}
 			}
 		],

@@ -1,8 +1,8 @@
 import cors from 'cors';
 import express, { Application } from 'express';
 import helmet from 'helmet';
-import morgan from './middlewares/morgan';
 
+import morgan from './middlewares/morgan';
 import { pingRouter } from './routes';
 
 const application: Application = express();

@@ -1,4 +1,5 @@
 import request from 'supertest';
+
 import application from '../src/app';
 
 describe('GET /api/ping', () => {

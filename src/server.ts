@@ -2,9 +2,9 @@ import application from './app';
 import configuration from './config/config';
 import logger from './config/logger';
 
-const server = application.listen(configuration.PORT, () =>
-	logger.info(`Server is running on port ${configuration.PORT}`),
-);
+const server = application.listen(configuration.PORT, () => {
+	logger.info(`Server is running on port ${configuration.PORT}`);
+});
 
 const exitHandler = (): void => {
 	server.close(() => {
@@ -24,7 +24,5 @@ process.on('unhandledRejection', unexpectedErrorHandler);
 
 process.on('SIGTERM', () => {
 	logger.info('SIGTERM received. Closing server...');
-	if (server) {
-		server.close();
-	}
+	server.close();
 });
