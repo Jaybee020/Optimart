@@ -30,6 +30,7 @@ const getDefaultNftMetadata = (tokenId: string, issuer: string): NFTMetadata => 
  * @param uri - The hex-encoded NFT URI to resolve.
  * @returns The decoded NFT Token URI.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const hexEncodedNftUriToString = (uri: string): string => {
 	const val = convertHexToString(uri);
 
@@ -45,6 +46,7 @@ const resolveNFTMetadata = async (
 	uri: string,
 	issuer: string,
 ): Promise<NFTMetadata> => {
+	// TODO: remember to replace with valid logic.
 	return getDefaultNftMetadata(tokenId, issuer);
 };
 
