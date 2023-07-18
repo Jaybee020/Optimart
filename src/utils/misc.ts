@@ -1,9 +1,7 @@
-const isIpfsUrl = (url: string): boolean => {
-	return url.startsWith('ipfs:') ? true : false;
-};
+export function isIpfsUrl(url: string): boolean {
+	return url.startsWith('ipfs:');
+}
 
-const isHttpsUrl = (url: string): boolean => {
-	return url.startsWith('https:') ? true : false;
-};
-
-export { isIpfsUrl, isHttpsUrl };
+export function isHttpsUrl(url: string): boolean {
+	return url.startsWith('https:');
+}
