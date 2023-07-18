@@ -71,19 +71,23 @@ const dumpNFTsIntoDB = async (csvPath: string): Promise<void> => {
 		const metadata = await resolveNFTMetadata(tokenId, uri, issuer);
 
 		owners.push({ address: owner });
-		collections.push({
-			name: metadata.name,
-			taxon: parseInt(taxon),
-			issuer: issuer,
-			collectionId: collectionId,
-			description: metadata.description,
-		});
+
+		if (parseInt(taxon) !== 0) {
+			collections.push({
+				name: metadata.name,
+				taxon: parseInt(taxon),
+				issuer: issuer,
+				collectionId: collectionId,
+				description: metadata.description,
+			});
+		}
+
 		nfts.push({
 			uri: uri,
 			owner: owner,
 			tokenId: tokenId,
 			imageUrl: metadata.imageUrl,
-			collectionId: collectionId,
+			collectionId: parseInt(taxon) !== 0 ? collectionId : null,
 			attributes: JSON.stringify(metadata.attributes),
 		});
 	}
@@ -99,7 +103,13 @@ const nftsSeed = path.join(seedDir, 'nfts.csv');
 
 prisma.$connect().then(async () => {
 	console.log('Seed DB connected successfully!');
+
 	await dumpIssuersIntoDB(issuersSeed);
+	console.log('Issuers dumped.');
+
 	await dumpNFTsIntoDB(nftsSeed);
+	console.log('NFTs dumped.');
+
 	await prisma.$disconnect();
+	console.log('Seed DB disconnected successfully!');
 });

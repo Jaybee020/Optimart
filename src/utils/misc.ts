@@ -5,4 +5,5 @@ const isIpfsUrl = (url: string): boolean => {
 const isHttpsUrl = (url: string): boolean => {
 	return url.startsWith('https:') ? true : false;
 };
+
 export { isIpfsUrl, isHttpsUrl };
