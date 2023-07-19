@@ -18,7 +18,7 @@ git clone https://github.com/Jaybee020/Optimart.git
 
 2. Navigate to the directory and install the dependencies.
 ```sh
-cd Optimart
+cd Optimart && npm i
 ```
 
 3. Populate the required environment variables using `.env.example` as a template.
