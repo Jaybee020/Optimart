@@ -42,10 +42,9 @@ class XrplClient {
 				account: address,
 				ledger_index: 'validated',
 			});
-			await this.disconnect();
 			return response;
-		} catch (err: unknown) {
-			throw err;
+		} finally {
+			await this.disconnect();
 		}
 	}
 }
