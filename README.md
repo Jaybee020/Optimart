@@ -23,7 +23,7 @@ cd Optimart && npm i
 
 3. Populate the required environment variables using `.env.example` as a template.
 ```sh
-cp .env.example .env.dev
+cp .env.example .env
 ```
 
 4. Run database migration.
