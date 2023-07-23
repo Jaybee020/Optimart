@@ -66,7 +66,7 @@ async function dumpNFTsIntoDB(csvPath: string): Promise<void> {
 	const parser = fs.createReadStream(csvPath).pipe(parse({ from: 2 }));
 
 	for await (const entry of parser) {
-		const [tokenId, issuer, owner, taxon, , , , uri] = entry;
+		const [tokenId, issuer, owner, taxon, , , sequence, uri] = entry;
 		const collectionId = issuer + '-' + taxon;
 		const metadata = await NftService.resolveNFTMetadata(tokenId, uri, issuer);
 
@@ -89,6 +89,7 @@ async function dumpNFTsIntoDB(csvPath: string): Promise<void> {
 			imageUrl: metadata.imageUrl,
 			collectionId: parseInt(taxon) !== 0 ? collectionId : null,
 			attributes: JSON.stringify(metadata.attributes),
+			sequence: sequence,
 		});
 	}
 
