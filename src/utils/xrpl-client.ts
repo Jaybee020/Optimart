@@ -2,7 +2,6 @@ import {
 	AccountInfoResponse,
 	AccountNFTsResponse,
 	Client,
-	NFTBuyOffersResponse,
 	NFTokenAcceptOffer,
 	NFTokenCancelOffer,
 	NFTokenCreateOffer,
@@ -11,7 +10,7 @@ import {
 import { Amount, NFTOffer } from 'xrpl/dist/npm/models/common';
 
 import configuration from '../config/config';
-import { NFTHistoryTxnsResponse, NFTInfoResponse } from '../interfaces';
+import { NFTHistoryTxnsResponse, NFTInfoResponse, NFTOffersResponse } from '../interfaces';
 
 class XrplClient {
 	private client: Client;
@@ -236,7 +235,7 @@ class XrplClient {
 			const offers = [];
 			let marker;
 			do {
-				const response: NFTBuyOffersResponse = await this.client.request({
+				const response: NFTOffersResponse = await this.client.request({
 					command: offerType == 'buy' ? 'nft_buy_offers' : 'nft_sell_offers',
 					nft_id: nftId,
 					ledger_index: 'validated',

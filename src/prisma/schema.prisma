@@ -144,8 +144,8 @@ model Nft {
   price Decimal @default(0)
   sequence Int 
 
-  listing Listing?
-  auction Auction?
+  listing Listing[]
+  auction Auction[]
 
   offers Offer[]
 

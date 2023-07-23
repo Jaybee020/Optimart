@@ -1,6 +1,6 @@
 import { Nft } from '@prisma/client';
 import { Transaction, TransactionMetadata } from 'xrpl';
-import { LedgerIndex } from 'xrpl/dist/npm/models/common';
+import { LedgerIndex, NFTOffer } from 'xrpl/dist/npm/models/common';
 import { BaseResponse } from 'xrpl/dist/npm/models/methods/baseMethod';
 
 export interface NFTMetadata {
@@ -43,4 +43,12 @@ export interface NFTInfoResponse extends BaseResponse {
 export interface CollectionTokensData {
 	name: string;
 	nfts: Nft[];
+}
+
+export interface NFTOffersResponse extends BaseResponse {
+	result: {
+		offers: NFTOffer[];
+		nft_id: string;
+		marker?: string;
+	};
 }
