@@ -9,3 +9,6 @@ coverage
 # JSON Config settings
 package*.json
 tsconfig.json
+
+# Markdown files
+*.md
