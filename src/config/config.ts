@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { z } from 'zod';
 
 const configSchema = z.object({
-	PORT: z.number().default(3000),
+	PORT: z.coerce.number().default(3000),
 	SECRET_KEY: z.string().nonempty(),
 	DATABASE_URL: z.string().url().nonempty(),
 	NODE_ENV: z.string().default('development'),
