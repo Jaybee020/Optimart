@@ -9,11 +9,11 @@ class CollectionService {
 		this.collectionModel = prisma.collection;
 	}
 
-	getCount(): Promise<number> {
+	count(): Promise<number> {
 		return this.collectionModel.count();
 	}
 
-	getCollections(limit: number = 100, offset: number = 0): Promise<Collection[]> {
+	all(limit: number = 100, offset: number = 0): Promise<Collection[]> {
 		return this.collectionModel.findMany({
 			skip: offset,
 			take: limit,
@@ -38,18 +38,18 @@ class CollectionService {
 		});
 	}
 
-	getByName(name: string): Promise<Collection[]> {
-		return this.collectionModel.findMany({ where: { name: name } });
+	getByCollectionId(collectionId: string): Promise<Collection[]> {
+		return this.collectionModel.findMany({ where: { collectionId: collectionId } });
 	}
 
-	getTokensInCollection(
-		collectionName: string,
-		limit: number = 100,
+	getTokens(
+		collectionId: string,
+		limit: number = 1000,
 		offset: number = 0,
 	): Promise<CollectionTokensData | null> {
 		return this.collectionModel.findFirst({
 			where: {
-				name: collectionName,
+				collectionId: collectionId,
 			},
 			select: {
 				name: true,

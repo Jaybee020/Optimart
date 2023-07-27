@@ -12,11 +12,11 @@ class ListingOfferService {
 		return this.listingOfferCollection.findUnique({ where: { id: id } });
 	}
 
-	getCount(): Promise<number> {
+	count(): Promise<number> {
 		return this.listingOfferCollection.count();
 	}
 
-	getOffers(limit: number = 100, offset: number = 0): Promise<ListingOffer[]> {
+	all(limit: number = 100, offset: number = 0): Promise<ListingOffer[]> {
 		return this.listingOfferCollection.findMany({ take: limit, skip: offset });
 	}
 
@@ -26,10 +26,6 @@ class ListingOfferService {
 
 	update(id: string, data: Prisma.ListingOfferUpdateInput): Promise<ListingOffer> {
 		return this.listingOfferCollection.update({ where: { id: id }, data: data });
-	}
-
-	delete(id: string): Promise<ListingOffer> {
-		return this.listingOfferCollection.delete({ where: { id: id } });
 	}
 }
 

@@ -3,24 +3,21 @@ import { Auction, Prisma } from '@prisma/client';
 import prisma from '../prisma/index';
 
 class AuctionService {
-	auctionCollection;
-	constructor() {
-		this.auctionCollection = prisma.auction;
+	auctionModel = prisma.auction;
+
+	count(): Promise<number> {
+		return this.auctionModel.count();
 	}
 
-	getCount(): Promise<number> {
-		return this.auctionCollection.count();
-	}
-
-	getAuctions(limit: number = 100, offset: number = 0): Promise<Auction[]> {
-		return this.auctionCollection.findMany({
+	all(limit: number = 100, offset: number = 0): Promise<Auction[]> {
+		return this.auctionModel.findMany({
 			take: limit,
 			skip: offset,
 		});
 	}
 
-	getByTokenId(tokenId: string): Promise<Auction | null> {
-		return this.auctionCollection.findUnique({
+	getByTokenId(tokenId: string): Promise<Auction[] | null> {
+		return this.auctionModel.findMany({
 			where: {
 				nftId: tokenId,
 			},
@@ -28,19 +25,11 @@ class AuctionService {
 	}
 
 	create(data: Prisma.AuctionCreateInput): Promise<Auction> {
-		return this.auctionCollection.create({ data: data });
+		return this.auctionModel.create({ data: data });
 	}
 
 	update(id: string, updateData: Prisma.AuctionUpdateInput): Promise<Auction> {
-		return this.auctionCollection.update({ where: { id: id }, data: updateData });
-	}
-
-	delete(id: string): Promise<Auction | null> {
-		return this.auctionCollection.delete({
-			where: {
-				id: id,
-			},
-		});
+		return this.auctionModel.update({ where: { id: id }, data: updateData });
 	}
 }
 

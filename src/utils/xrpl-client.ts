@@ -59,7 +59,28 @@ class XrplClient {
 	}
 
 	/**
-	 * Retrieves account information from the XRP Ledger.
+	 * Retrieves information on a  transaction by its  hash
+	 *
+	 * @param txHash - The XRP Ledger account address for which to retrieve information.
+	 * @returns A Promise that resolves to the account information response.
+	 * @throws {Error} If there's an issue with the XRP Ledger client or the request.
+	 */
+	public async getTransaction(txHash: string): Promise<Transaction> {
+		try {
+			await this.connect();
+			const response = await this.client.request({
+				command: 'tx',
+				transaction: txHash,
+				ledger_index: 'validated',
+			});
+			return response.result;
+		} finally {
+			await this.disconnect();
+		}
+	}
+
+	/**
+	 * Retrieves tha  NFT information  of the address from the XRP Ledger.
 	 *
 	 * @param address - The XRP Ledger account address for which to retrieve NFT information.
 	 * @returns A Promise that resolves to the account's NFT information response.
@@ -102,6 +123,7 @@ class XrplClient {
 			Account: sellerAddr,
 			Amount: price,
 			Destination: destinationAddr,
+			Flags: 1,
 			Expiration: expirationTime,
 		};
 		return txn;
@@ -133,12 +155,13 @@ class XrplClient {
 			Owner: sellerAddr,
 			Destination: destinationAddr,
 			Expiration: expirationTime,
+			Flags: 0,
 		};
 		return txn;
 	}
 
 	/**
-	 * Deletes existing NFTokenOffer objects..
+	 * Cancel existing NFTokenOffer objects..
 	 * @param addr -The XRP Ledger account address that cancels the offers.
 	 * @param offerIds - An array of NFToken offer identifiers to be deleted in this transaction.
 	 * @returns A transaction object to be signed and broadcasted to the xrp network.
@@ -212,9 +235,9 @@ class XrplClient {
 					command: 'nft_history',
 					nft_id: nftId,
 					ledger_index: 'validated',
-					forward: false, //to signify order
+					forward: true, //to signify order
 				});
-				marker = response['result']['marker'];
+				marker = response.result.marker;
 				txns.push(...response['result']['transactions'].map((txData) => txData.tx));
 			} while (marker);
 			return txns;
@@ -239,8 +262,9 @@ class XrplClient {
 					command: offerType == 'buy' ? 'nft_buy_offers' : 'nft_sell_offers',
 					nft_id: nftId,
 					ledger_index: 'validated',
+					limit: 500,
 				});
-				marker = response['result']['marker'];
+				marker = response.result.marker;
 				offers.push(...response.result.offers);
 			} while (marker);
 			return offers;

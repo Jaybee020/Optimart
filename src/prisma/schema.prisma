@@ -50,6 +50,8 @@ model Listing {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt()
   status      ListingStatus @default(ONGOING)
+  createTxnHash String 
+  updateTxnHash String?
 
   offers ListingOffer[]
 
@@ -66,6 +68,8 @@ model ListingOffer {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt()
   status      OfferStatus @default(PENDING)
+  createTxnHash String @unique()
+  updateTxnHash String? @unique()
 
   listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   offeree User    @relation(name: "receivedListingOffers", fields: [offereeAddr], references: [address], onDelete: Cascade)
@@ -80,7 +84,9 @@ model Auction {
   minBid      Decimal
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt()
-  status      OfferStatus @default(PENDING)
+  status      ListingStatus @default(ONGOING)
+  createTxnHash String @unique()
+  updateTxnHash String? @unique()
 
   bids AuctionBid[]
 
@@ -97,6 +103,8 @@ model AuctionBid {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt()
   status       OfferStatus @default(PENDING)
+  createTxnHash String @unique()
+  updateTxnHash String? @unique()
 
   auction  Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   bidder   User    @relation(name: "initiatedAuctionBids", fields: [bidderAddr], references: [address], onDelete: Cascade)
@@ -112,6 +120,8 @@ model Offer {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt()
   status       OfferStatus @default(PENDING)
+  createTxnHash String @unique()
+  updateTxnHash String? @unique()
 
   nft      Nft  @relation(fields: [nftId], references: [tokenId], onDelete: Cascade)
   sender   User @relation(name: "sentOffers", fields: [senderAddr], references: [address], onDelete: Cascade)
@@ -124,9 +134,10 @@ model Collection {
   taxon        Int
   issuer       String
   description  String
+  // gotten from a combination of `issuer-taxon`
   collectionId String @unique
   floorPrice Decimal @default(0)
-  dateCreated DateTime? 
+  createdAt DateTime? 
 
   nfts Nft[]
 

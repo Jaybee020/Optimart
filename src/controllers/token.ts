@@ -1,17 +1,17 @@
 import { Request, Response } from 'express';
+import httpStatus from 'http-status';
 import { parseNFTokenID } from 'xrpl';
 
 import TokenService from '../services/token';
 import { decodeNftFlagNumber } from '../utils/misc';
 
-class TokenController {
+class TokensController {
 	async getTokenById(req: Request, res: Response): Promise<void> {
 		try {
 			const tokenId = req.params.tokenId;
 			const nftData = parseNFTokenID(tokenId);
 			const token = await TokenService.getOrCreateByTokenId(tokenId);
-			res.status(200).send({
-				message: null,
+			res.status(httpStatus.OK).send({
 				data: {
 					...token,
 					flags: decodeNftFlagNumber(nftData.Flags),
@@ -19,13 +19,12 @@ class TokenController {
 					transferFee: nftData.TransferFee,
 				},
 			});
-		} catch (err: any) {
-			res.status(400).send({
-				message: err.message,
-				data: null,
+		} catch (err: unknown) {
+			res.status(httpStatus.BAD_REQUEST).send({
+				error: err,
 			});
 		}
 	}
 }
 
-export default new TokenController();
+export default new TokensController();
