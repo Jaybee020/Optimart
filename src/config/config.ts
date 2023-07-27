@@ -10,6 +10,7 @@ const configSchema = Joi.object({
 	XRPL_ACCOUNT_SECRET: Joi.string().required(),
 });
 
-const { value } = configSchema.validate(process.env);
+const { value, error } = configSchema.validate(process.env);
+if (error) throw error;
 
 export default value;
