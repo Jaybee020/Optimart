@@ -3,26 +3,31 @@ import { Listing, Prisma } from '@prisma/client';
 import prisma from '../prisma/index';
 
 class ListingService {
-	listingModel;
-	constructor() {
-		this.listingModel = prisma.listing;
-	}
+	listingModel = prisma.listing;
 
-	getCount(): Promise<number> {
+	count(): Promise<number> {
 		return this.listingModel.count();
 	}
 
-	getListings(limit: number = 100, offset: number = 0): Promise<Listing[]> {
+	all(limit: number = 100, offset: number = 0): Promise<Listing[]> {
 		return this.listingModel.findMany({
 			take: limit,
 			skip: offset,
 		});
 	}
 
-	getByTokenId(tokenId: string): Promise<Listing | null> {
-		return this.listingModel.findUnique({
+	getByTokenId(tokenId: string): Promise<Listing[] | null> {
+		return this.listingModel.findMany({
 			where: {
 				nftId: tokenId,
+			},
+		});
+	}
+
+	getById(id: string): Promise<Listing | null> {
+		return this.listingModel.findUnique({
+			where: {
+				id: id,
 			},
 		});
 	}
@@ -35,12 +40,8 @@ class ListingService {
 		return this.listingModel.update({ where: { id: id }, data: updateData });
 	}
 
-	delete(id: string): Promise<Listing | null> {
-		return this.listingModel.delete({
-			where: {
-				id: id,
-			},
-		});
+	cancelListing(id: string, txHash: string): Promise<Listing> {
+		return this.update(id, { status: 'CANCELLED', updateTxnHash: txHash });
 	}
 }
 

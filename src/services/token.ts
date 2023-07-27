@@ -5,17 +5,14 @@ import { XrplClient } from '../utils';
 import NFTMetadataService from '../utils/nft-metadata';
 
 class NftService {
-	NFTCollection;
-	constructor() {
-		this.NFTCollection = prisma.nft;
-	}
+	NFTModel = prisma.nft;
 
-	getCount(): Promise<number> {
-		return this.NFTCollection.count();
+	count(): Promise<number> {
+		return this.NFTModel.count();
 	}
 
 	getById(id: string): Promise<Nft | null> {
-		return this.NFTCollection.findUnique({
+		return this.NFTModel.findUnique({
 			where: {
 				id: id,
 			},
@@ -23,7 +20,7 @@ class NftService {
 	}
 
 	getByTokenId(tokenId: string): Promise<Nft | null> {
-		return this.NFTCollection.findUnique({
+		return this.NFTModel.findUnique({
 			where: {
 				tokenId: tokenId,
 			},
@@ -48,7 +45,7 @@ class NftService {
 	}
 
 	async create(data: Prisma.NftCreateInput): Promise<Nft> {
-		return this.NFTCollection.create({ data: data });
+		return this.NFTModel.create({ data: data });
 	}
 
 	async getOrCreateByTokenId(tokenId: string): Promise<Nft> {
@@ -60,7 +57,7 @@ class NftService {
 	}
 
 	update(id: string, data: Prisma.NftUpdateInput): Promise<Nft> {
-		return this.NFTCollection.update({ where: { id: id }, data: data });
+		return this.NFTModel.update({ where: { id: id }, data: data });
 	}
 }
 

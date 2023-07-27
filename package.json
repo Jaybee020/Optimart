@@ -49,6 +49,7 @@
     "http-status": "^1.6.2",
     "morgan": "^1.10.0",
     "prisma": "^5.0.0",
+    "verify-xrpl-signature": "^1.0.0",
     "winston": "^3.10.0",
     "xrpl": "^2.7.0",
     "zod": "^3.21.4"

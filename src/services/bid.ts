@@ -3,33 +3,26 @@ import { AuctionBid, Prisma } from '@prisma/client';
 import prisma from '../prisma/index';
 
 class AuctionBidService {
-	auctionBidCollection;
-	constructor() {
-		this.auctionBidCollection = prisma.auctionBid;
-	}
+	auctionBidModel = prisma.auctionBid;
 
 	getById(id: string): Promise<AuctionBid | null> {
-		return this.auctionBidCollection.findUnique({ where: { id: id } });
+		return this.auctionBidModel.findUnique({ where: { id: id } });
 	}
 
-	getCount(): Promise<number> {
-		return this.auctionBidCollection.count();
+	count(): Promise<number> {
+		return this.auctionBidModel.count();
 	}
 
-	getBids(limit: number = 100, offset: number = 0): Promise<AuctionBid[]> {
-		return this.auctionBidCollection.findMany({ take: limit, skip: offset });
+	all(limit: number = 100, offset: number = 0): Promise<AuctionBid[]> {
+		return this.auctionBidModel.findMany({ take: limit, skip: offset });
 	}
 
 	create(data: Prisma.AuctionBidCreateInput): Promise<AuctionBid> {
-		return this.auctionBidCollection.create({ data: data });
+		return this.auctionBidModel.create({ data: data });
 	}
 
 	update(id: string, data: Prisma.AuctionBidUpdateInput): Promise<AuctionBid> {
-		return this.auctionBidCollection.update({ where: { id: id }, data: data });
-	}
-
-	delete(id: string): Promise<AuctionBid> {
-		return this.auctionBidCollection.delete({ where: { id: id } });
+		return this.auctionBidModel.update({ where: { id: id }, data: data });
 	}
 }
 
