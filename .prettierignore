@@ -17,3 +17,6 @@ tsconfig.json
 
 # Markdown files
 *.md
+
+# JSON files
+*json

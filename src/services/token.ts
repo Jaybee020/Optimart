@@ -5,37 +5,33 @@ import { XrplClient } from '../utils';
 import NFTMetadataService from '../utils/nft-metadata';
 
 class NftService {
-	NFTModel = prisma.nft;
+	model = prisma.nft;
 
-	count(): Promise<number> {
-		return this.NFTModel.count();
+	async count(): Promise<number> {
+		return this.model.count();
 	}
 
-	getById(id: string): Promise<Nft | null> {
-		return this.NFTModel.findUnique({
+	async getById(id: string): Promise<Nft | null> {
+		return this.model.findUnique({
 			where: {
 				id: id,
 			},
 		});
 	}
 
-	getByTokenId(tokenId: string): Promise<Nft | null> {
-		return this.NFTModel.findUnique({
+	getByTokenId(id: string): Promise<Nft | null> {
+		return this.model.findUnique({
 			where: {
-				tokenId: tokenId,
+				tokenId: id,
 			},
 		});
 	}
 
-	async createByTokenId(tokenId: string): Promise<Nft> {
-		const nftData = await XrplClient.getNFTInfo(tokenId);
-		const metadata = await NFTMetadataService.resolveNFTMetadata(
-			tokenId,
-			nftData.uri,
-			nftData.issuer,
-		);
+	async createByTokenId(id: string): Promise<Nft> {
+		const nftData = await XrplClient.getNFTInfo(id);
+		const metadata = await NFTMetadataService.resolveNFTMetadata(id, nftData.uri, nftData.issuer);
 		return this.create({
-			tokenId: tokenId,
+			tokenId: id,
 			owner: nftData.owner,
 			sequence: nftData.nft_sequence,
 			attributes: JSON.stringify(metadata.attributes),
@@ -45,19 +41,19 @@ class NftService {
 	}
 
 	async create(data: Prisma.NftCreateInput): Promise<Nft> {
-		return this.NFTModel.create({ data: data });
+		return this.model.create({ data: data });
 	}
 
-	async getOrCreateByTokenId(tokenId: string): Promise<Nft> {
-		const token = await this.getByTokenId(tokenId);
+	async getOrCreateByTokenId(id: string): Promise<Nft> {
+		const token = await this.getByTokenId(id);
 		if (!token) {
-			return this.createByTokenId(tokenId);
+			return this.createByTokenId(id);
 		}
 		return token;
 	}
 
-	update(id: string, data: Prisma.NftUpdateInput): Promise<Nft> {
-		return this.NFTModel.update({ where: { id: id }, data: data });
+	async update(id: string, data: Prisma.NftUpdateInput): Promise<Nft> {
+		return this.model.update({ where: { id: id }, data: data });
 	}
 }
 

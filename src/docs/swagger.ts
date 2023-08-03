@@ -18,6 +18,6 @@ const documentation = {
 const outputFile = './swagger.json';
 const endpointsFiles = ['../app'];
 
-generateDocs(outputFile, endpointsFiles, documentation).then(() => {
-	require('../server');
+generateDocs(outputFile, endpointsFiles, documentation).then(async () => {
+	await import('../server');
 });

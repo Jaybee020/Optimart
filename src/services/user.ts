@@ -3,33 +3,22 @@ import { Prisma, User } from '@prisma/client';
 import prisma from '../prisma/index';
 
 class UserService {
-	userCollection;
-	constructor() {
-		this.userCollection = prisma.user;
-	}
+	model = prisma.user;
 
-	getById(id: string): Promise<User | null> {
-		return this.userCollection.findUnique({
-			where: {
-				id: id,
-			},
-		});
-	}
-
-	getByAddr(addr: string): Promise<User | null> {
-		return this.userCollection.findUnique({
+	async getByAddr(addr: string): Promise<User | null> {
+		return this.model.findUnique({
 			where: {
 				address: addr,
 			},
 		});
 	}
 
-	create(data: Prisma.UserCreateInput): Promise<User> {
-		return this.userCollection.create({ data: data });
+	async create(data: Prisma.UserCreateInput): Promise<User> {
+		return this.model.create({ data: data });
 	}
 
-	update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
-		return this.userCollection.update({ where: { id: id }, data: data });
+	async update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
+		return this.model.update({ where: { id: id }, data: data });
 	}
 
 	async getOrCreateByAddr(addr: string): Promise<User> {

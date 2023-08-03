@@ -3,11 +3,7 @@ import { convertHexToString } from 'xrpl';
 import { NFTMetadata } from '../interfaces';
 
 class NftService {
-	public async resolveNFTMetadata(
-		tokenId: string,
-		uri: string,
-		issuer: string,
-	): Promise<NFTMetadata> {
+	public async resolveNFTMetadata(tokenId: string, uri: string, issuer: string): Promise<NFTMetadata> {
 		// TODO: remember to replace with valid logic.
 		return this.getDefaultNftMetadata(tokenId, issuer);
 	}

@@ -1,19 +1,15 @@
 import 'dotenv/config';
-import { deriveAddress, deriveKeypair } from 'xrpl';
-import { z } from 'zod';
+import Joi from 'joi';
 
-const configSchema = z.object({
-	PORT: z.coerce.number().default(3000),
-	SECRET_KEY: z.string().nonempty(),
-	DATABASE_URL: z.string().url().nonempty(),
-	NODE_ENV: z.string().default('development'),
-	XRPL_NODE_URL: z.string().url().nonempty(),
-	XRPL_ACCOUNT_SECRET: z.string().nonempty(),
+const configSchema = Joi.object({
+	PORT: Joi.number().default(3000),
+	SECRET_KEY: Joi.string().required(),
+	DATABASE_URL: Joi.string().uri({ scheme: 'postgresql' }).required(),
+	NODE_ENV: Joi.string().default('development'),
+	XRPL_NODE_URL: Joi.string().uri({ scheme: 'wss' }).required(),
+	XRPL_ACCOUNT_SECRET: Joi.string().required(),
 });
 
-const configuration = configSchema.parse(process.env);
+const { value } = configSchema.validate(process.env);
 
-export default {
-	...configuration,
-	XRPL_ACCOUNT_ADDRESS: deriveAddress(deriveKeypair(configuration.XRPL_ACCOUNT_SECRET).publicKey),
-};
+export default value;

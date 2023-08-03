@@ -1,46 +1,55 @@
 import { Listing, Prisma } from '@prisma/client';
 
+import { ListingDBFilters } from '../interfaces';
 import prisma from '../prisma/index';
 
 class ListingService {
-	listingModel = prisma.listing;
+	model = prisma.listing;
 
-	count(): Promise<number> {
-		return this.listingModel.count();
+	async count(): Promise<number> {
+		return prisma.listing.count();
 	}
 
-	all(limit: number = 100, offset: number = 0): Promise<Listing[]> {
-		return this.listingModel.findMany({
-			take: limit,
-			skip: offset,
+	async all(filters: ListingDBFilters): Promise<Listing[]> {
+		return this.model.findMany({
+			take: filters.limit,
+			skip: filters.offset,
+			where: {
+				AND: [
+					{ status: filters.status },
+					{ creatorAddr: filters.creator },
+					{ createdAt: { lte: filters.listedAfter } },
+					{ createdAt: { gte: filters.listedBefore } },
+				],
+			},
 		});
 	}
 
-	getByTokenId(tokenId: string): Promise<Listing[] | null> {
-		return this.listingModel.findMany({
+	async getByTokenId(tokenId: string): Promise<Listing[] | null> {
+		return this.model.findMany({
 			where: {
 				nftId: tokenId,
 			},
 		});
 	}
 
-	getById(id: string): Promise<Listing | null> {
-		return this.listingModel.findUnique({
+	async getById(id: string): Promise<Listing | null> {
+		return this.model.findUnique({
 			where: {
 				id: id,
 			},
 		});
 	}
 
-	create(data: Prisma.ListingCreateInput): Promise<Listing> {
-		return this.listingModel.create({ data: data });
+	async create(data: Prisma.ListingCreateInput): Promise<Listing> {
+		return this.model.create({ data: data });
 	}
 
-	update(id: string, updateData: Prisma.ListingUpdateInput): Promise<Listing> {
-		return this.listingModel.update({ where: { id: id }, data: updateData });
+	async update(id: string, updateData: Prisma.ListingUpdateInput): Promise<Listing> {
+		return this.model.update({ where: { id: id }, data: updateData });
 	}
 
-	cancelListing(id: string, txHash: string): Promise<Listing> {
+	async cancelListing(id: string, txHash: string): Promise<Listing> {
 		return this.update(id, { status: 'CANCELLED', updateTxnHash: txHash });
 	}
 }
