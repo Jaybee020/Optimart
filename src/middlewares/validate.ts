@@ -2,8 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import httpStatus from 'http-status';
 import Joi from 'joi';
 
-import ApiError from '../utils/api-error';
-import pick from '../utils/pick';
+import { pick, ApiError } from '../utils';
 
 interface ValidatorSchema {
 	body?: Joi.SchemaLike;
@@ -11,7 +10,7 @@ interface ValidatorSchema {
 	params?: Joi.SchemaLike;
 }
 
-export default function validate(schema: ValidatorSchema) {
+export function validate(schema: ValidatorSchema) {
 	return function (req: Request, res: Response, next: NextFunction): void {
 		const validSchema = pick(schema, ['params', 'query', 'body']);
 		const payload = pick(req, Object.keys(validSchema));

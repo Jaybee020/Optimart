@@ -89,7 +89,7 @@ async function dumpNFTsIntoDB(csvPath: string): Promise<void> {
 			imageUrl: metadata.imageUrl,
 			collectionId: parseInt(taxon) !== 0 ? collectionId : null,
 			attributes: JSON.stringify(metadata.attributes),
-			sequence: sequence,
+			sequence: parseInt(sequence),
 		});
 	}
 

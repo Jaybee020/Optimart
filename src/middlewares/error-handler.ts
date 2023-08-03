@@ -2,8 +2,7 @@ import { Prisma } from '@prisma/client';
 import { Request, Response, NextFunction } from 'express';
 import httpStatus from 'http-status';
 
-import configuration from '../config/config';
-import logger from '../config/logger';
+import { configuration, logger } from '../config';
 import ApiError from '../utils/api-error';
 
 export async function errorConverter(

@@ -1,7 +1,7 @@
 import { Collection } from '@prisma/client';
 
 import { CollectionTokensData } from '../interfaces';
-import prisma from '../prisma/index';
+import prisma from '../prisma';
 
 class CollectionService {
 	model = prisma.collection;

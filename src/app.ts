@@ -5,8 +5,7 @@ import httpStatus from 'http-status';
 import swaggerUi from 'swagger-ui-express';
 
 import swaggerDocument from './docs/swagger.json';
-import { errorConverter, errorHandler } from './middlewares/error-handler';
-import morgan from './middlewares/morgan';
+import { morgan, errorHandler, errorConverter } from './middlewares';
 import { pingRouter, collectionRouter, listingRouter, tokenRouter } from './routes';
 import ApiError from './utils/api-error';
 

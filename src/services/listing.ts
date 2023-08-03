@@ -1,7 +1,7 @@
 import { Listing, Prisma } from '@prisma/client';
 
 import { ListingDBFilters } from '../interfaces';
-import prisma from '../prisma/index';
+import prisma from '../prisma';
 
 class ListingService {
 	model = prisma.listing;

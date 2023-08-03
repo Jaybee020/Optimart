@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import httpStatus from 'http-status';
 import { verifySignature } from 'verify-xrpl-signature';
 
-import UserService from '../services/user';
+import { UserService } from '../services';
 
 export async function authenticateSignature(req: Request, res: Response, next: NextFunction): Promise<void> {
 	const authSig = req.headers.authorization;

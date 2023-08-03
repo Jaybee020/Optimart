@@ -1,19 +1,28 @@
 import { Router } from 'express';
 
-import { getListingById, getListings, createListing, cancelListing } from '../controllers/listing';
-import { authenticateSignature } from '../middlewares/auth';
-import validate from '../middlewares/validate';
-import catchAsync from '../utils/catch-async';
+import { ListingController } from '../controllers';
+import { validate, authenticateSignature } from '../middlewares';
+import { catchAsync } from '../utils';
 import listingValidation from '../validators/listing';
 
 const listingRouter = Router();
 
 listingRouter
-	.get('/', validate(listingValidation.getAll), catchAsync(getListings))
-	.post('/', authenticateSignature, validate(listingValidation.create), catchAsync(createListing));
+	.get('/', validate(listingValidation.getAll), catchAsync(ListingController.getListings))
+	.post(
+		'/',
+		authenticateSignature,
+		validate(listingValidation.create),
+		catchAsync(ListingController.createListing),
+	);
 
 listingRouter
-	.get('/:id', validate(listingValidation.getById), catchAsync(getListingById))
-	.delete('/:id', authenticateSignature, validate(listingValidation.cancel), catchAsync(cancelListing));
+	.get('/:id', validate(listingValidation.getById), catchAsync(ListingController.getListingById))
+	.delete(
+		'/:id',
+		authenticateSignature,
+		validate(listingValidation.cancel),
+		catchAsync(ListingController.cancelListing),
+	);
 
 export default listingRouter;

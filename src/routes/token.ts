@@ -1,12 +1,12 @@
 import { Router } from 'express';
 
-import { getTokenById } from '../controllers/token';
-import validate from '../middlewares/validate';
-import catchAsync from '../utils/catch-async';
+import { TokenController } from '../controllers';
+import { validate } from '../middlewares';
+import { catchAsync } from '../utils';
 import tokenValidation from '../validators/token';
 
 const tokenRouter = Router();
 
-tokenRouter.get('/:id', validate(tokenValidation.getById), catchAsync(getTokenById));
+tokenRouter.get('/:id', validate(tokenValidation.getById), catchAsync(TokenController.getTokenById));
 
 export default tokenRouter;
