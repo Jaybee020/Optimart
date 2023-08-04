@@ -10,6 +10,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum OfferStatus{
+  CANCELLED
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ListingStatus{
+  ONGOING
+  CANCELLED
+  COMPLETED
+}
+
+
 model User {
   id      String  @id @default(cuid())
   email   String? @unique
@@ -35,6 +49,9 @@ model Listing {
   price       Decimal
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt()
+  status      ListingStatus @default(ONGOING)
+  createTxnHash String 
+  updateTxnHash String?
 
   offers ListingOffer[]
 
@@ -50,6 +67,9 @@ model ListingOffer {
   amount      Decimal
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt()
+  status      OfferStatus @default(PENDING)
+  createTxnHash String @unique()
+  updateTxnHash String? @unique()
 
   listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   offeree User    @relation(name: "receivedListingOffers", fields: [offereeAddr], references: [address], onDelete: Cascade)
@@ -64,6 +84,9 @@ model Auction {
   minBid      Decimal
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt()
+  status      ListingStatus @default(ONGOING)
+  createTxnHash String @unique()
+  updateTxnHash String? @unique()
 
   bids AuctionBid[]
 
@@ -79,6 +102,9 @@ model AuctionBid {
   amount       Decimal
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt()
+  status       OfferStatus @default(PENDING)
+  createTxnHash String @unique()
+  updateTxnHash String? @unique()
 
   auction  Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   bidder   User    @relation(name: "initiatedAuctionBids", fields: [bidderAddr], references: [address], onDelete: Cascade)
@@ -93,6 +119,9 @@ model Offer {
   amount       Decimal
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt()
+  status       OfferStatus @default(PENDING)
+  createTxnHash String @unique()
+  updateTxnHash String? @unique()
 
   nft      Nft  @relation(fields: [nftId], references: [tokenId], onDelete: Cascade)
   sender   User @relation(name: "sentOffers", fields: [senderAddr], references: [address], onDelete: Cascade)
@@ -105,7 +134,10 @@ model Collection {
   taxon        Int
   issuer       String
   description  String
+  // gotten from a combination of `issuer-taxon`
   collectionId String @unique
+  floorPrice Decimal @default(0)
+  createdAt DateTime? 
 
   nfts Nft[]
 
@@ -114,15 +146,17 @@ model Collection {
 
 model Nft {
   id           String  @id @default(cuid())
-  uri          String
+  uri          String?
   tokenId      String  @unique
   owner        String
-  imageUrl     String
-  attributes   Json
+  imageUrl     String?
+  attributes   Json?
   collectionId String?
+  price Decimal @default(0)
+  sequence Int 
 
-  listing Listing?
-  auction Auction?
+  listing Listing[]
+  auction Auction[]
 
   offers Offer[]
 

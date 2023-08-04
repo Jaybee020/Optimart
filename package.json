@@ -10,9 +10,9 @@
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/server.ts",
     "lint": "eslint --cache .",
     "format": "eslint --fix . && prettier --write .",
-    "db:seed": "npx prisma db seed",
+    "db:seed": "npx prisma db seed -- -p <path_to_directory>",
     "swagger:gendoc": "ts-node src/docs/swagger.ts",
-    "db:migrate:dev": "npx prisma migrate dev",
+    "db:migrate:dev": "npx prisma migrate dev --skip-seed",
     "db:migrate:deploy": "npx prisma migrate deploy",
     "prettier": "prettier --config .prettierrc --write ."
   },
@@ -52,12 +52,13 @@
     "express": "^4.18.2",
     "helmet": "^7.0.0",
     "http-status": "^1.6.2",
+    "joi": "^17.9.2",
     "morgan": "^1.10.0",
     "prisma": "^5.0.0",
     "swagger-ui-express": "^5.0.0",
+    "verify-xrpl-signature": "^1.0.0",
     "winston": "^3.10.0",
-    "xrpl": "^2.7.0",
-    "zod": "^3.21.4"
+    "xrpl": "^2.7.0"
   },
   "prisma": {
     "schema": "./src/prisma/schema.prisma",

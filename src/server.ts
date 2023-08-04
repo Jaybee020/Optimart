@@ -1,6 +1,5 @@
 import application from './app';
-import configuration from './config/config';
-import logger from './config/logger';
+import { configuration, logger } from './config';
 
 const server = application.listen(configuration.PORT, () => {
 	logger.info(`Server is running on port ${configuration.PORT}`);
