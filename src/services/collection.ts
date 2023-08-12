@@ -62,6 +62,11 @@ class CollectionService {
 			},
 		});
 	}
+
+	async getMintPrice(id: string): Promise<number> {
+		const collection = await this.model.findFirst({ where: { id: id } });
+		return collection?.mintPrice as unknown as number;
+	}
 }
 
 export default new CollectionService();
