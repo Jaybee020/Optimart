@@ -6,6 +6,8 @@ import {
 	NFTokenCancelOffer,
 	NFTokenCreateOffer,
 	Transaction,
+	deriveAddress,
+	deriveKeypair,
 } from 'xrpl';
 import { Amount, NFTOffer } from 'xrpl/dist/npm/models/common';
 
@@ -24,7 +26,7 @@ class XrplClient {
 	 *
 	 * @throws {Error} If there's an issue with connecting the client.
 	 */
-	public async connect(): Promise<void> {
+	private async connect(): Promise<void> {
 		return this.client.connect();
 	}
 
@@ -33,7 +35,7 @@ class XrplClient {
 	 *
 	 * @throws {Error} If there's an issue with disconnecting the client.
 	 */
-	public async disconnect(): Promise<void> {
+	private async disconnect(): Promise<void> {
 		return this.client.disconnect();
 	}
 
@@ -44,7 +46,7 @@ class XrplClient {
 	 * @returns A Promise that resolves to the account information response.
 	 * @throws {Error} If there's an issue with the XRP Ledger client or the request.
 	 */
-	public async getAccountInfo(address: string): Promise<AccountInfoResponse> {
+	async getAccountInfo(address: string): Promise<AccountInfoResponse> {
 		try {
 			await this.connect();
 			const response = await this.client.request({
@@ -65,7 +67,7 @@ class XrplClient {
 	 * @returns A Promise that resolves to the account information response.
 	 * @throws {Error} If there's an issue with the XRP Ledger client or the request.
 	 */
-	public async getTransaction(txHash: string): Promise<Transaction> {
+	async getTransaction(txHash: string): Promise<Transaction> {
 		try {
 			await this.connect();
 			const response = await this.client.request({
@@ -86,7 +88,7 @@ class XrplClient {
 	 * @returns A Promise that resolves to the account's NFT information response.
 	 * @throws {Error} If there's an issue with the XRP Ledger client or the request.
 	 */
-	public async getAccountNFTInfo(address: string): Promise<AccountNFTsResponse> {
+	async getAccountNFTInfo(address: string): Promise<AccountNFTsResponse> {
 		try {
 			await this.connect();
 			const response = await this.client.request({
@@ -110,7 +112,7 @@ class XrplClient {
 	 * @param expirationTime - The time after which the offer will no longer be valid.
 	 * @returns A transaction object to be signed and broadcasted to the xrp network.
 	 */
-	public listNFTForSale(
+	listNFTForSale(
 		sellerAddr: string,
 		nftId: string,
 		price: Amount,
@@ -139,7 +141,7 @@ class XrplClient {
 	 * @param expirationTime - The time after which the offer will no longer be valid.
 	 * @returns A transaction object to be signed and broadcasted to the xrp network.
 	 */
-	public createBuyOfferForNFT(
+	createBuyOfferForNFT(
 		buyerAddr: string,
 		price: string,
 		nftId: string,
@@ -167,7 +169,7 @@ class XrplClient {
 	 * @returns A transaction object to be signed and broadcasted to the xrp network.
 	 */
 
-	public cancelOfferForNFTokens(addr: string, offerIds: string[]): NFTokenCancelOffer {
+	cancelOfferForNFTokens(addr: string, offerIds: string[]): NFTokenCancelOffer {
 		const txn: NFTokenCancelOffer = {
 			TransactionType: 'NFTokenCancelOffer',
 			Account: addr,
@@ -185,7 +187,7 @@ class XrplClient {
 	 * @returns A transaction object to be signed and broadcasted to the xrp network.
 	 */
 
-	public acceptOfferForNFTokens(
+	acceptOfferForNFTokens(
 		addr: string,
 		buyOfferId: string,
 		sellOfferId: string,
@@ -206,7 +208,7 @@ class XrplClient {
 	 * @param nftId  -  The unique identifier for the non-fungible token .
 	 * @returns A Promise that resolves to the information about the NFT being queried.
 	 */
-	public async getNFTInfo(nftId: string): Promise<NFTInfoResponse> {
+	async getNFTInfo(nftId: string): Promise<NFTInfoResponse> {
 		try {
 			await this.connect();
 			const response: NFTInfoResponse = await this.client.request({
@@ -225,7 +227,7 @@ class XrplClient {
 	 * @param nftId  -  The unique identifier for the non-fungible token .
 	 * @returns A Promise that resolves to the past transaction metadata for the NFT being queried
 	 */
-	public async getNFTHistoryTxns(nftId: string): Promise<Transaction[]> {
+	async getNFTHistoryTxns(nftId: string): Promise<Transaction[]> {
 		try {
 			await this.connect();
 			const txns = [];
@@ -252,7 +254,7 @@ class XrplClient {
 	 * @param offerType - The type for which offers are to be fetched
 	 * @returns A Promise that resolves to the a list of buy offers for a given NFToken.
 	 */
-	public async getNFTokenOffers(nftId: string, offerType: 'buy' | 'sell'): Promise<NFTOffer[]> {
+	async getNFTokenOffers(nftId: string, offerType: 'buy' | 'sell'): Promise<NFTOffer[]> {
 		try {
 			await this.connect();
 			const offers = [];
@@ -270,6 +272,36 @@ class XrplClient {
 			return offers;
 		} finally {
 			await this.disconnect();
+		}
+	}
+
+	/**
+	 * Get the XRP Ledger address from a given private key.
+	 * @param {string} privateKey - The private key to derive the address from.
+	 * @returns {string} The XRP Ledger address corresponding to the given private key.
+	 * @throws {Error} If there's an issue with the derivation
+	 */
+	getAddressFromPrivateKey(privateKey: string): string {
+		const { publicKey } = deriveKeypair(privateKey);
+		return deriveAddress(publicKey);
+	}
+
+	decodeNftFlagNumber(flagNumber: number): string[] {
+		switch (flagNumber) {
+			case 1:
+				return ['Burnable'];
+			case 2:
+				return ['OnlyXRP'];
+			case 8:
+				return ['Transferable'];
+			case 9:
+				return ['Burnable', 'Transferable'];
+			case 10:
+				return ['OnlyXRP', 'Transferable'];
+			case 11:
+				return ['OnlyXRP', 'Transferable', 'Burnable'];
+			default:
+				return [];
 		}
 	}
 }

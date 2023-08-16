@@ -1,3 +1,6 @@
-import pingRouter from '../routes/ping';
+import collectionRouter from './collection';
+import listingRouter from './listing';
+import pingRouter from './ping';
+import tokenRouter from './token';
 
-export { pingRouter };
+export { pingRouter, collectionRouter, listingRouter, tokenRouter };

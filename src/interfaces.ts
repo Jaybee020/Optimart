@@ -52,3 +52,12 @@ export interface NFTOffersResponse extends BaseResponse {
 		marker?: string;
 	};
 }
+
+export interface ListingDBFilters {
+	status?: 'ONGOING' | 'CANCELLED' | 'COMPLETED';
+	limit?: number;
+	offset?: number;
+	creator?: string;
+	listedBefore?: Date;
+	listedAfter?: Date;
+}

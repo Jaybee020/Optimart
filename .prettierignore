@@ -14,3 +14,9 @@ tsconfig.json
 .prettierignore
 
 *.yml
+
+# Markdown files
+*.md
+
+# JSON files
+*json

@@ -1,20 +1,30 @@
 import { Collection } from '@prisma/client';
 
 import { CollectionTokensData } from '../interfaces';
-import prisma from '../prisma/index';
+import prisma from '../prisma';
 
 class CollectionService {
-	collectionModel;
-	constructor() {
-		this.collectionModel = prisma.collection;
+	model = prisma.collection;
+
+	async count(): Promise<number> {
+		return this.model.count();
 	}
 
-	count(): Promise<number> {
-		return this.collectionModel.count();
+	async search(q: string, limit: number): Promise<Collection[]> {
+		return this.model.findMany({
+			take: limit,
+			where: {
+				OR: [
+					{ name: { contains: q } },
+					{ description: { contains: q } },
+					{ issuer: { contains: q } },
+				],
+			},
+		});
 	}
 
-	all(limit: number = 100, offset: number = 0): Promise<Collection[]> {
-		return this.collectionModel.findMany({
+	async all(limit: number, offset: number): Promise<Collection[]> {
+		return this.model.findMany({
 			skip: offset,
 			take: limit,
 			include: {
@@ -25,8 +35,8 @@ class CollectionService {
 		});
 	}
 
-	getById(id: string): Promise<Collection | null> {
-		return this.collectionModel.findUnique({
+	async getById(id: string): Promise<Collection | null> {
+		return this.model.findUniqueOrThrow({
 			where: {
 				id: id,
 			},
@@ -38,18 +48,10 @@ class CollectionService {
 		});
 	}
 
-	getByCollectionId(collectionId: string): Promise<Collection[]> {
-		return this.collectionModel.findMany({ where: { collectionId: collectionId } });
-	}
-
-	getTokens(
-		collectionId: string,
-		limit: number = 1000,
-		offset: number = 0,
-	): Promise<CollectionTokensData | null> {
-		return this.collectionModel.findFirst({
+	async getTokens(id: string, limit: number, offset: number): Promise<CollectionTokensData | null> {
+		return this.model.findFirst({
 			where: {
-				collectionId: collectionId,
+				id: id,
 			},
 			select: {
 				name: true,
