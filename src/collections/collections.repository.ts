@@ -3,7 +3,7 @@ import { Collection } from '@prisma/client';
 import { CollectionTokensData } from '../interfaces';
 import prisma from '../prisma';
 
-class CollectionService {
+class CollectionRepository {
 	model = prisma.collection;
 
 	async count(): Promise<number> {
@@ -64,4 +64,4 @@ class CollectionService {
 	}
 }
 
-export default new CollectionService();
+export default new CollectionRepository();

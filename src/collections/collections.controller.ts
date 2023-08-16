@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
 
-import { CollectionService } from '../services';
+import CollectionRepository from './collections.repository';
 
 class CollectionController {
 	async searchCollections(req: Request, res: Response): Promise<void> {
 		const { q, limit } = req.query;
-		const matchingCollections = await CollectionService.search(q as string, Number(limit));
+		const matchingCollections = await CollectionRepository.search(q as string, Number(limit));
 		res.status(httpStatus.OK).json({
 			data: matchingCollections,
 		});
@@ -14,7 +14,7 @@ class CollectionController {
 
 	async getByCollectionId(req: Request, res: Response): Promise<void> {
 		const { id } = req.params;
-		const collection = await CollectionService.getById(id as string);
+		const collection = await CollectionRepository.getById(id as string);
 
 		res.status(httpStatus.OK).json({
 			data: collection,
@@ -24,7 +24,7 @@ class CollectionController {
 	async getTokensInCollection(req: Request, res: Response): Promise<void> {
 		const { id } = req.params;
 		const { offset, limit } = req.query;
-		const collectionWithTokens = await CollectionService.getTokens(
+		const collectionWithTokens = await CollectionRepository.getTokens(
 			id as string,
 			Number(limit),
 			Number(offset),

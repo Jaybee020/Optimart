@@ -10,7 +10,7 @@
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/server.ts",
     "lint": "eslint --cache .",
     "format": "eslint --fix . && prettier --write .",
-    "db:seed": "npx prisma db seed -- -p <path_to_directory>",
+    "db:seed": "npx prisma db seed -- -p ./.seeds",
     "swagger:gendoc": "ts-node src/docs/swagger.ts",
     "db:migrate:dev": "npx prisma migrate dev --skip-seed",
     "db:migrate:deploy": "npx prisma migrate deploy",

@@ -5,7 +5,7 @@ import { parseNFTokenID } from 'xrpl';
 import { TokenService } from '../services';
 import { XrplClient } from '../utils';
 
-class TokenController {
+class NFTController {
 	async getTokenById(req: Request, res: Response): Promise<void> {
 		const { id } = req.params;
 		const nftData = parseNFTokenID(id);
@@ -22,4 +22,4 @@ class TokenController {
 	}
 }
 
-export default new TokenController();
+export default new NFTController();

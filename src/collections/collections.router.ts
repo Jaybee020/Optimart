@@ -1,25 +1,25 @@
 import { Router } from 'express';
 
-import { CollectionController } from '../controllers';
+import CollectionController from './collections.controller';
+import CollectionValidation from './collections.validator';
 import { validate } from '../middlewares';
 import { catchAsync } from '../utils';
-import collectionValidation from '../validators/collection';
 
 const collectionRouter = Router();
 
 collectionRouter.get(
 	'/search',
-	validate(collectionValidation.searchCollection),
+	validate(CollectionValidation.searchCollection),
 	catchAsync(CollectionController.searchCollections),
 );
 collectionRouter.get(
 	'/tokens/:id',
-	validate(collectionValidation.getCollectionTokens),
+	validate(CollectionValidation.getCollectionTokens),
 	catchAsync(CollectionController.getTokensInCollection),
 );
 collectionRouter.get(
 	'/:id',
-	validate(collectionValidation.getCollection),
+	validate(CollectionValidation.getCollection),
 	catchAsync(CollectionController.getByCollectionId),
 );
 
