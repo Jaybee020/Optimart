@@ -52,10 +52,10 @@ model Listing {
   nftId       String   
   price       Decimal
   createdAt   DateTime @default(now())
-  duration    Decimal?
+  endAt       DateTime?
   updatedAt   DateTime @updatedAt()
   status      ListingStatus @default(ONGOING)
-  type        ListingType @default(REGULAR)
+  type        ListingType
   createTxnHash String 
   updateTxnHash String?
 
@@ -72,7 +72,7 @@ model ListingOffer {
   listingId   String?
   nftId        String
   amount      Decimal
-  duration    Decimal?
+  endAt       DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt()
   status      OfferStatus @default(PENDING)
@@ -89,7 +89,7 @@ model Auction {
   id          String   @id @default(cuid())
   creatorAddr String
   nftId       String   
-  duration    Decimal
+  endAt       DateTime
   minBid      Decimal
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt()

@@ -41,7 +41,10 @@ class OfferController {
 		const { txHash, extraPayload } = req.body;
 		const { listingId } = extraPayload;
 		const tx = (await XrplClient.getTransaction(txHash)) as NFTokenCreateOffer;
-
+		const endAt = tx.Expiration ? rippleTimeToUnixTime(tx.Expiration) : undefined;
+		if (endAt) {
+			assert(endAt > Date.now(), 'Invalid value for ending timestamp');
+		}
 		assert(tx.Account == req.user?.address, 'Not authorised');
 		assert(tx.Flags == 0, 'Offer type in transaction is not of right type');
 		assert(tx.TransactionType == 'NFTokenCreateOffer', "Transaction provided is of wrong type'");
@@ -51,13 +54,9 @@ class OfferController {
 		);
 
 		const nft = await TokenService.getOrCreateByTokenId(tx.NFTokenID);
-		const duration = tx.Expiration != undefined ? Date.now() - rippleTimeToUnixTime(tx.Expiration) : null;
 		if (listingId) {
 			const listing = await ListingService.getById(listingId);
 			assert(listing != null && listing.status == 'ONGOING', 'Invalid listing id provided');
-		}
-		if (duration) {
-			assert(duration > 0, 'Invalid duration for listing');
 		}
 
 		const offer = await ListingOfferService.create({
@@ -78,7 +77,7 @@ class OfferController {
 					},
 				},
 			},
-			duration: duration,
+			endAt: endAt ? new Date(endAt) : undefined,
 			listing: {
 				connect: { id: listingId },
 			},

@@ -61,7 +61,7 @@ export interface ListingDBFilters {
 	listedBefore?: Date;
 	listedAfter?: Date;
 	nftId?: string;
-	type: 'REGULAR' | 'AUCTION';
+	type?: 'REGULAR' | 'AUCTION';
 }
 
 export interface OfferDBFilters {

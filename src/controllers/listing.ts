@@ -32,7 +32,9 @@ class ListingController {
 		const { txHash, extraPayload } = req.body;
 		const { type } = extraPayload;
 		const tx = (await XrplClient.getTransaction(txHash)) as NFTokenCreateOffer;
+		const endAt = tx.Expiration ? rippleTimeToUnixTime(tx.Expiration) : undefined;
 
+		assert(type == 'REGULAR' || type == 'AUCTION', 'Invalid listing type input');
 		assert(tx.Account == req.user?.address, 'Not authorised');
 		assert(tx.Flags == 1, 'Offer type in transaction is not of right type');
 		assert(tx.TransactionType == 'NFTokenCreateOffer', "Transaction provided is of wrong type'");
@@ -40,18 +42,16 @@ class ListingController {
 			tx.Destination == XrplClient.getAddressFromPrivateKey(configuration.XRPL_ACCOUNT_SECRET),
 			'Transaction destination address does not belong to Optimart',
 		);
+		if (type == 'AUCTION') {
+			assert(endAt != undefined, 'Auction types must have an expiration time');
+		}
+		if (endAt) {
+			assert(endAt > Date.now(), 'Invalid value for ending timestamp');
+		}
 
 		const nft = await TokenService.getOrCreateByTokenId(tx.NFTokenID);
 		const ongoingListings = await ListingService.all({ status: 'ONGOING', nftId: nft.tokenId });
-		const duration =
-			tx.Expiration !== undefined ? Date.now() - rippleTimeToUnixTime(tx.Expiration) : null;
 
-		if (type == 'AUCTION') {
-			assert(duration !== null, 'Auction types must have duration');
-		}
-		if (duration) {
-			assert(duration > 0, 'Invalid duration for listing');
-		}
 		assert(
 			ongoingListings.length == 0,
 			'A listing for this token is still ongoing, cancel/close it before creating a new one',
@@ -69,7 +69,7 @@ class ListingController {
 				},
 			},
 			price: Number(tx.Amount),
-			duration: duration,
+			endAt: endAt ? new Date(endAt) : undefined,
 			type: type,
 			nft: {
 				connect: {
