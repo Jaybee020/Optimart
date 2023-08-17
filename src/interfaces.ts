@@ -60,4 +60,18 @@ export interface ListingDBFilters {
 	creator?: string;
 	listedBefore?: Date;
 	listedAfter?: Date;
+	nftId?: string;
+	type: 'REGULAR' | 'AUCTION';
+}
+
+export interface OfferDBFilters {
+	limit?: number;
+	offset?: number;
+	offeree?: string;
+	offeror?: string;
+	listing?: string;
+	offeredBefore?: Date;
+	offeredAfter?: Date;
+	nftId?: string;
+	status?: 'PENDING' | 'CANCELLED' | 'ACCEPTED' | 'REJECTED';
 }

@@ -1,5 +1,6 @@
 import { ListingOffer, Prisma } from '@prisma/client';
 
+import { OfferDBFilters } from '../interfaces';
 import prisma from '../prisma/index';
 
 class ListingOfferService {
@@ -9,12 +10,38 @@ class ListingOfferService {
 		return this.model.findUnique({ where: { id: id } });
 	}
 
-	async count(): Promise<number> {
-		return this.model.count();
+	async count(filters: OfferDBFilters): Promise<number> {
+		return this.model.count({
+			where: {
+				AND: [
+					{ offereeAddr: filters.offeree },
+					{ offerorAddr: filters.offeror },
+					{ createdAt: { lte: filters.offeredAfter } },
+					{ createdAt: { gte: filters.offeredBefore } },
+					{ listingId: filters.listing },
+					{ status: filters.status },
+				],
+			},
+		});
 	}
 
-	async all(limit: number, offset: number): Promise<ListingOffer[]> {
-		return this.model.findMany({ take: limit, skip: offset });
+	async all(filters: OfferDBFilters): Promise<ListingOffer[]> {
+		return this.model.findMany({
+			take: filters.limit,
+			skip: filters.offset,
+
+			where: {
+				AND: [
+					{ offereeAddr: filters.offeree },
+					{ offerorAddr: filters.offeror },
+					{ createdAt: { lte: filters.offeredAfter } },
+					{ createdAt: { gte: filters.offeredBefore } },
+					{ listingId: filters.listing },
+					{ status: filters.status },
+					{ nftId: filters.nftId },
+				],
+			},
+		});
 	}
 
 	async create(data: Prisma.ListingOfferCreateInput): Promise<ListingOffer> {

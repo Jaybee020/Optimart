@@ -1,7 +1,7 @@
 import { Listing } from '@prisma/client';
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
-import { NFTokenCancelOffer, NFTokenCreateOffer } from 'xrpl';
+import { NFTokenCancelOffer, NFTokenCreateOffer, rippleTimeToUnixTime } from 'xrpl';
 
 import { configuration } from '../config';
 import { ListingDBFilters } from '../interfaces';
@@ -29,7 +29,8 @@ class ListingController {
 	}
 
 	async createListing(req: Request, res: Response): Promise<void> {
-		const { txHash } = req.body;
+		const { txHash, extraPayload } = req.body;
+		const { type } = extraPayload;
 		const tx = (await XrplClient.getTransaction(txHash)) as NFTokenCreateOffer;
 
 		assert(tx.Account == req.user?.address, 'Not authorised');
@@ -40,13 +41,22 @@ class ListingController {
 			'Transaction destination address does not belong to Optimart',
 		);
 
-		const ongoingListings = await ListingService.all({ status: 'ONGOING' });
+		const nft = await TokenService.getOrCreateByTokenId(tx.NFTokenID);
+		const ongoingListings = await ListingService.all({ status: 'ONGOING', nftId: nft.tokenId });
+		const duration =
+			tx.Expiration !== undefined ? Date.now() - rippleTimeToUnixTime(tx.Expiration) : null;
+
+		if (type == 'AUCTION') {
+			assert(duration !== null, 'Auction types must have duration');
+		}
+		if (duration) {
+			assert(duration > 0, 'Invalid duration for listing');
+		}
 		assert(
 			ongoingListings.length == 0,
 			'A listing for this token is still ongoing, cancel/close it before creating a new one',
 		);
 
-		const nft = await TokenService.getOrCreateByTokenId(tx.NFTokenID);
 		const listing = await ListingService.create({
 			creator: {
 				connectOrCreate: {
@@ -59,6 +69,8 @@ class ListingController {
 				},
 			},
 			price: Number(tx.Amount),
+			duration: duration,
+			type: type,
 			nft: {
 				connect: {
 					tokenId: nft.tokenId,

@@ -20,6 +20,8 @@ class ListingService {
 					{ creatorAddr: filters.creator },
 					{ createdAt: { lte: filters.listedAfter } },
 					{ createdAt: { gte: filters.listedBefore } },
+					{ nftId: filters.nftId },
+					{ type: filters.type },
 				],
 			},
 		});
