@@ -4,7 +4,7 @@ import prisma from '../prisma/index';
 import { XrplClient } from '../utils';
 import NFTMetadataService from '../utils/nft-metadata';
 
-class NFTRepository {
+class NFTService {
 	model = prisma.nft;
 
 	async count(): Promise<number> {
@@ -57,4 +57,4 @@ class NFTRepository {
 	}
 }
 
-export default new NFTRepository();
+export default new NFTService();
