@@ -26,14 +26,14 @@ class Listing(models.Model):
         blank=False,
         null=False,
     )
-    price = models.DecimalField('price', max_digits=20, decimal_places=4, blank=False, null=False)
+    price = models.DecimalField('price', max_digits=24, decimal_places=6, blank=False, null=False)
 
     # holds the transaction hash for the `sell` NFTokenCreateOffer
     create_tx_hash = models.CharField('create transaction hash', max_length=255, blank=False, null=False)
     # holds the transaction hash for the NFTokenAcceptOffer/NFTokenCancelOffer
     update_tx_hash = models.CharField('update transaction hash', max_length=255, blank=True, null=True)
 
-    created_at = models.DateTimeField('created at', auto_now_add=True)
+    created_at = models.DateTimeField('created at', blank=False, null=False)
     updated_at = models.DateTimeField('updated at', auto_now=True)
     status = models.CharField('status', max_length=10, choices=ListingStatus.choices, blank=False, null=False)
     # auctions require an expiration to be set
@@ -49,7 +49,7 @@ class Offer(models.Model):
         blank=False,
         null=False,
     )
-    amount = models.DecimalField('amount', max_digits=20, decimal_places=4, blank=False, null=False)
+    amount = models.DecimalField('amount', max_digits=24, decimal_places=6, blank=False, null=False)
 
     # holds the transaction hash for the `buy` NFTokenCreateOffer
     create_tx_hash = models.CharField('create transaction hash', max_length=255, blank=False, null=False)
