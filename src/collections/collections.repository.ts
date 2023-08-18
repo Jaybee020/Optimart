@@ -1,6 +1,6 @@
 import { Collection } from '@prisma/client';
 
-import { CollectionTokensData } from '../interfaces';
+import { CollectionTokensData, TopCollectionsFilter } from '../interfaces';
 import prisma from '../prisma';
 
 class CollectionRepository {
@@ -23,7 +23,7 @@ class CollectionRepository {
 		});
 	}
 
-	async all(limit: number, offset: number): Promise<Collection[]> {
+	async all(filters: TopCollectionsFilter): Promise<Collection[]> {
 		return this.model.findMany({
 			skip: offset,
 			take: limit,
@@ -38,7 +38,7 @@ class CollectionRepository {
 	async getById(id: string): Promise<Collection | null> {
 		return this.model.findUniqueOrThrow({
 			where: {
-				id: id,
+				collectionId: id,
 			},
 			include: {
 				_count: {
@@ -51,7 +51,7 @@ class CollectionRepository {
 	async getTokens(id: string, limit: number, offset: number): Promise<CollectionTokensData | null> {
 		return this.model.findFirst({
 			where: {
-				id: id,
+				collectionId: id,
 			},
 			select: {
 				name: true,

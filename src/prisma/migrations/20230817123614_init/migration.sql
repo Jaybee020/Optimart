@@ -1,3 +1,12 @@
+-- CreateEnum
+CREATE TYPE "OfferStatus" AS ENUM ('CANCELLED', 'PENDING', 'ACCEPTED', 'REJECTED');
+
+-- CreateEnum
+CREATE TYPE "ListingStatus" AS ENUM ('ONGOING', 'CANCELLED', 'COMPLETED');
+
+-- CreateEnum
+CREATE TYPE "NftStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'LIST', 'AUCTION');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -15,6 +24,9 @@ CREATE TABLE "Listing" (
     "price" DECIMAL(65,30) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "status" "ListingStatus" NOT NULL DEFAULT 'ONGOING',
+    "createTxnHash" TEXT NOT NULL,
+    "updateTxnHash" TEXT,
 
     CONSTRAINT "Listing_pkey" PRIMARY KEY ("id")
 );
@@ -28,6 +40,9 @@ CREATE TABLE "ListingOffer" (
     "amount" DECIMAL(65,30) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "status" "OfferStatus" NOT NULL DEFAULT 'PENDING',
+    "createTxnHash" TEXT NOT NULL,
+    "updateTxnHash" TEXT,
 
     CONSTRAINT "ListingOffer_pkey" PRIMARY KEY ("id")
 );
@@ -41,6 +56,9 @@ CREATE TABLE "Auction" (
     "minBid" DECIMAL(65,30) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "status" "ListingStatus" NOT NULL DEFAULT 'ONGOING',
+    "createTxnHash" TEXT NOT NULL,
+    "updateTxnHash" TEXT,
 
     CONSTRAINT "Auction_pkey" PRIMARY KEY ("id")
 );
@@ -54,6 +72,9 @@ CREATE TABLE "AuctionBid" (
     "amount" DECIMAL(65,30) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "status" "OfferStatus" NOT NULL DEFAULT 'PENDING',
+    "createTxnHash" TEXT NOT NULL,
+    "updateTxnHash" TEXT,
 
     CONSTRAINT "AuctionBid_pkey" PRIMARY KEY ("id")
 );
@@ -67,6 +88,9 @@ CREATE TABLE "Offer" (
     "amount" DECIMAL(65,30) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "status" "OfferStatus" NOT NULL DEFAULT 'PENDING',
+    "createTxnHash" TEXT NOT NULL,
+    "updateTxnHash" TEXT,
 
     CONSTRAINT "Offer_pkey" PRIMARY KEY ("id")
 );
@@ -79,6 +103,17 @@ CREATE TABLE "Collection" (
     "issuer" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "collectionId" TEXT NOT NULL,
+    "floorPrice" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3),
+    "dailyVolume" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "weeklyVolume" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "monthlyVolume" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "allTimeVolume" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "pictureUrl" TEXT,
+    "bannerUrl" TEXT,
+    "discordLink" TEXT,
+    "twitterLink" TEXT,
+    "instagramLink" TEXT,
 
     CONSTRAINT "Collection_pkey" PRIMARY KEY ("id")
 );
@@ -86,14 +121,27 @@ CREATE TABLE "Collection" (
 -- CreateTable
 CREATE TABLE "Nft" (
     "id" TEXT NOT NULL,
-    "uri" TEXT NOT NULL,
+    "uri" TEXT,
     "tokenId" TEXT NOT NULL,
-    "owner" TEXT NOT NULL,
-    "imageUrl" TEXT NOT NULL,
-    "attributes" JSONB NOT NULL,
+    "owner" TEXT,
+    "imageUrl" TEXT,
     "collectionId" TEXT,
+    "price" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "sequence" INTEGER NOT NULL,
+    "status" "NftStatus" NOT NULL DEFAULT 'INACTIVE',
 
     CONSTRAINT "Nft_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "NftAttribute" (
+    "id" TEXT NOT NULL,
+    "nftId" TEXT NOT NULL,
+    "collectionId" TEXT,
+    "key" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+
+    CONSTRAINT "NftAttribute_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -106,7 +154,31 @@ CREATE UNIQUE INDEX "User_address_key" ON "User"("address");
 CREATE UNIQUE INDEX "Listing_nftId_key" ON "Listing"("nftId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "ListingOffer_createTxnHash_key" ON "ListingOffer"("createTxnHash");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ListingOffer_updateTxnHash_key" ON "ListingOffer"("updateTxnHash");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Auction_nftId_key" ON "Auction"("nftId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Auction_createTxnHash_key" ON "Auction"("createTxnHash");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Auction_updateTxnHash_key" ON "Auction"("updateTxnHash");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AuctionBid_createTxnHash_key" ON "AuctionBid"("createTxnHash");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AuctionBid_updateTxnHash_key" ON "AuctionBid"("updateTxnHash");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Offer_createTxnHash_key" ON "Offer"("createTxnHash");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Offer_updateTxnHash_key" ON "Offer"("updateTxnHash");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Collection_collectionId_key" ON "Collection"("collectionId");
@@ -116,6 +188,9 @@ CREATE UNIQUE INDEX "Collection_issuer_taxon_key" ON "Collection"("issuer", "tax
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Nft_tokenId_key" ON "Nft"("tokenId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "NftAttribute_collectionId_nftId_key" ON "NftAttribute"("collectionId", "nftId");
 
 -- AddForeignKey
 ALTER TABLE "Listing" ADD CONSTRAINT "Listing_nftId_fkey" FOREIGN KEY ("nftId") REFERENCES "Nft"("tokenId") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -158,3 +233,9 @@ ALTER TABLE "Offer" ADD CONSTRAINT "Offer_receiverAddr_fkey" FOREIGN KEY ("recei
 
 -- AddForeignKey
 ALTER TABLE "Nft" ADD CONSTRAINT "Nft_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "Collection"("collectionId") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "NftAttribute" ADD CONSTRAINT "NftAttribute_nftId_fkey" FOREIGN KEY ("nftId") REFERENCES "Nft"("tokenId") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "NftAttribute" ADD CONSTRAINT "NftAttribute_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "Collection"("collectionId") ON DELETE CASCADE ON UPDATE CASCADE;

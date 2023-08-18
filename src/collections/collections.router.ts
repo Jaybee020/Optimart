@@ -13,14 +13,24 @@ collectionRouter.get(
 	catchAsync(CollectionController.searchCollections),
 );
 collectionRouter.get(
-	'/tokens/:id',
+	'/trending',
+	validate(CollectionValidation.searchCollection),
+	catchAsync(CollectionController.getTrendingCollections),
+);
+collectionRouter.get(
+	'/top',
+	validate(CollectionValidation.searchCollection),
+	catchAsync(CollectionController.getTopCollections),
+);
+collectionRouter.get(
+	'/nfts/:id',
 	validate(CollectionValidation.getCollectionTokens),
-	catchAsync(CollectionController.getTokensInCollection),
+	catchAsync(CollectionController.getNFTsInCollection),
 );
 collectionRouter.get(
 	'/:id',
 	validate(CollectionValidation.getCollection),
-	catchAsync(CollectionController.getByCollectionId),
+	catchAsync(CollectionController.getCollectionById),
 );
 
 export default collectionRouter;
