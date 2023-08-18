@@ -67,3 +67,20 @@ export interface TopCollectionsFilter {
 	offset?: number;
 	duration: '24h' | '7d' | '30d' | 'allTime';
 }
+
+enum NftStatus {
+	UNLIST = 'UNLIST',
+	LIST = 'LIST',
+	AUCTION = 'AUCTION',
+}
+
+export interface NftFilter {
+	name?: string;
+	issuer?: string;
+	status?: NftStatus;
+	minPrice?: number;
+	maxPrice?: number;
+	taxon?: number;
+	attributesCount?: number;
+	attributes: Record<string, any>;
+}

@@ -2,19 +2,8 @@ import { Request, Response } from 'express';
 import httpStatus from 'http-status';
 
 import CollectionService from './collections.service';
-import { TopCollectionsFilter } from '../interfaces';
 
 class CollectionController {
-	async getTopCollections(req: Request, res: Response): Promise<void> {
-		const topCollectionForDuration = await CollectionService.all({
-			limit: req.query.limit,
-			offset: req.query.offset,
-			duration: req.query.duration,
-		} as TopCollectionsFilter);
-
-		res.status(httpStatus.OK).json({ data: topCollectionForDuration });
-	}
-
 	async searchCollections(req: Request, res: Response): Promise<void> {
 		const { q, limit } = req.query;
 		const matchingCollections = await CollectionService.search(q as string, Number(limit));

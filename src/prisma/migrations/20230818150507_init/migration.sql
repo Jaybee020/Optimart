@@ -5,7 +5,7 @@ CREATE TYPE "OfferStatus" AS ENUM ('CANCELLED', 'PENDING', 'ACCEPTED', 'REJECTED
 CREATE TYPE "ListingStatus" AS ENUM ('ONGOING', 'CANCELLED', 'COMPLETED');
 
 -- CreateEnum
-CREATE TYPE "NftStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'LIST', 'AUCTION');
+CREATE TYPE "NftStatus" AS ENUM ('UNLIST', 'LIST', 'AUCTION');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -125,23 +125,13 @@ CREATE TABLE "Nft" (
     "tokenId" TEXT NOT NULL,
     "owner" TEXT,
     "imageUrl" TEXT,
+    "attributes" JSONB,
     "collectionId" TEXT,
     "price" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "sequence" INTEGER NOT NULL,
-    "status" "NftStatus" NOT NULL DEFAULT 'INACTIVE',
+    "status" "NftStatus" NOT NULL DEFAULT 'UNLIST',
 
     CONSTRAINT "Nft_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "NftAttribute" (
-    "id" TEXT NOT NULL,
-    "nftId" TEXT NOT NULL,
-    "collectionId" TEXT,
-    "key" TEXT NOT NULL,
-    "value" TEXT NOT NULL,
-
-    CONSTRAINT "NftAttribute_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -189,9 +179,6 @@ CREATE UNIQUE INDEX "Collection_issuer_taxon_key" ON "Collection"("issuer", "tax
 -- CreateIndex
 CREATE UNIQUE INDEX "Nft_tokenId_key" ON "Nft"("tokenId");
 
--- CreateIndex
-CREATE UNIQUE INDEX "NftAttribute_collectionId_nftId_key" ON "NftAttribute"("collectionId", "nftId");
-
 -- AddForeignKey
 ALTER TABLE "Listing" ADD CONSTRAINT "Listing_nftId_fkey" FOREIGN KEY ("nftId") REFERENCES "Nft"("tokenId") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -233,9 +220,3 @@ ALTER TABLE "Offer" ADD CONSTRAINT "Offer_receiverAddr_fkey" FOREIGN KEY ("recei
 
 -- AddForeignKey
 ALTER TABLE "Nft" ADD CONSTRAINT "Nft_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "Collection"("collectionId") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "NftAttribute" ADD CONSTRAINT "NftAttribute_nftId_fkey" FOREIGN KEY ("nftId") REFERENCES "Nft"("tokenId") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "NftAttribute" ADD CONSTRAINT "NftAttribute_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "Collection"("collectionId") ON DELETE CASCADE ON UPDATE CASCADE;

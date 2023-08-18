@@ -157,8 +157,7 @@ model Collection {
   twitterLink   String?
   instagramLink String?
 
-  nfts       Nft[]
-  attributes NftAttribute[]
+  nfts Nft[]
 
   @@unique([issuer, taxon])
 }
@@ -169,30 +168,16 @@ model Nft {
   tokenId      String    @unique
   owner        String?
   imageUrl     String?
+  attributes   Json?
   collectionId String?
   price        Decimal   @default(0)
   sequence     Int
-  status       NftStatus @default(INACTIVE)
+  status       NftStatus @default(UNLIST)
 
   listing Listing[]
   auction Auction[]
 
   offers Offer[]
 
-  collection Collection?    @relation(fields: [collectionId], references: [collectionId], onDelete: Cascade)
-  attributes NftAttribute[]
-}
-
-model NftAttribute {
-  id           String  @id @default(cuid())
-  nftId        String
-  collectionId String?
-
-  key   String
-  value String
-
-  nft        Nft         @relation(fields: [nftId], references: [tokenId], onDelete: Cascade)
   collection Collection? @relation(fields: [collectionId], references: [collectionId], onDelete: Cascade)
-
-  @@unique([collectionId, nftId])
 }

@@ -1,6 +1,6 @@
 import { Collection } from '@prisma/client';
 
-import { CollectionTokensData, TopCollectionsFilter } from '../interfaces';
+import { CollectionTokensData } from '../interfaces';
 import prisma from '../prisma';
 
 class CollectionService {
@@ -19,18 +19,6 @@ class CollectionService {
 					{ description: { contains: q } },
 					{ issuer: { contains: q } },
 				],
-			},
-		});
-	}
-
-	async all(filters: TopCollectionsFilter): Promise<Collection[]> {
-		return this.model.findMany({
-			skip: offset,
-			take: limit,
-			include: {
-				_count: {
-					select: { nfts: true },
-				},
 			},
 		});
 	}
