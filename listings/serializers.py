@@ -6,7 +6,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from accounts.serializers import AccountSerializer
-from collection.models import NFT
+from collection.models import NFT, NFTStatus
 from collection.serializers import NFTSerializer
 from services.xrpl import get_transaction_info
 
@@ -75,6 +75,8 @@ class CreateListingSerializer(BaseNFTokenCreateOfferSerializer):
         if validated_data['tx_info'].get('Expiration') is not None:
             listing.end_at = ripple_time_to_datetime(validated_data['tx_info']['Expiration'])
 
+        listing.nft.status = NFTStatus.LISTED
+        listing.nft.save()
         listing.save()
         return listing
 
@@ -158,3 +160,31 @@ class ListingSerializer(serializers.ModelSerializer):
             'end_at',
             'status',
         )
+
+
+class AcceptRejectOfferSerializer(serializers.Serializer):
+    offer_id = serializers.IntegerField(required=True)
+    action = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        try:
+            offer = Offer.objects.select_related('listing__nft', 'creator').get(id=attrs['offer_id'])
+        except Offer.DoesNotExist as e:
+            raise serializers.ValidationError(f'{e!s}') from e
+
+        if offer.listing.listing_type == ListingType.AUCTION:
+            raise serializers.ValidationError('Offers cannot be accepted or rejected for auctions')
+
+        if attrs['action'] not in {'accept', 'reject'}:
+            raise serializers.ValidationError('Invalid action provided. Valid actions are: accept, reject.')
+
+        if (
+            attrs['action'] == 'accept'
+            and Offer.objects.filter(listing=offer.listing, status=OfferStatus.ACCEPTED).exists()
+        ):
+            raise serializers.ValidationError('An offer has already been accepted for this listing')
+
+        if offer.status != OfferStatus.PENDING:
+            raise serializers.ValidationError('Only pending offers can be accepted or rejected')
+
+        return {'offer': offer, 'action': attrs['action']}
