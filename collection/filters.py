@@ -1,11 +1,16 @@
 from django.db.models import Count
 from django_filters import rest_framework as filters
 
+from rest_framework.filters import OrderingFilter
+
 from .models import NFT
 
 
-class NFTsFilter(filters.FilterSet):
-    attributes = filters.CharFilter(method='filter_attributes')
+class NFTsFilter(filters.FilterSet, OrderingFilter):
+    attributes = filters.CharFilter(
+        method='filter_attributes',
+        label='Use comma-separated <attribute-name>:<attribute-value> pairs to narrow down your results effectively.',
+    )
     name = filters.CharFilter(field_name='name', lookup_expr='icontains')
     status = filters.CharFilter(field_name='status', lookup_expr='exact')
     min_price = filters.NumberFilter(field_name='price', lookup_expr='gte')

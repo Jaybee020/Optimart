@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from accounts.serializers import AccountSerializer
+
 from .models import NFT, Collection, NFTAttribute
 
 
@@ -9,7 +11,24 @@ class NFTAttributeSerializer(serializers.ModelSerializer):
         fields = ('key', 'value')
 
 
+class MinimalCollectionSerializer(serializers.ModelSerializer):
+    issuer = AccountSerializer()
+
+    class Meta:
+        model = Collection
+        fields = (
+            'name',
+            'description',
+            'issuer',
+            'taxon',
+            'floor_price',
+            'image_url',
+            'banner_url',
+        )
+
+
 class CollectionSerializer(serializers.ModelSerializer):
+    issuer = AccountSerializer()
     collection_attributes = NFTAttributeSerializer(many=True)
 
     class Meta:
@@ -34,12 +53,15 @@ class CollectionSerializer(serializers.ModelSerializer):
 
 
 class NFTSerializer(serializers.ModelSerializer):
+    owner = AccountSerializer()
     nft_attributes = NFTAttributeSerializer(many=True)
+    collection = MinimalCollectionSerializer()
 
     class Meta:
         model = NFT
         fields = (
             'name',
+            'collection',
             'token_identifier',
             'sequence',
             'owner',

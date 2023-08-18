@@ -5,7 +5,9 @@ from django.utils import timezone
 
 from rest_framework import serializers
 
+from accounts.serializers import AccountSerializer
 from collection.models import NFT
+from collection.serializers import NFTSerializer
 from services.xrpl import get_transaction_info
 
 from .enums import ListingStatus, ListingType, OfferStatus
@@ -116,13 +118,43 @@ class CreateOfferSerializer(BaseNFTokenCreateOfferSerializer):
         return offer
 
 
-class ListingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Listing
-        fields = '__all__'
-
-
 class OfferSerializer(serializers.ModelSerializer):
+    creator = AccountSerializer()
+    nft = NFTSerializer(source='listing.nft')
+
     class Meta:
         model = Offer
-        fields = '__all__'
+        fields = (
+            'id',
+            'listing_id',
+            'amount',
+            'creator',
+            'nft',
+            'create_tx_hash',
+            'update_tx_hash',
+            'status',
+            'created_at',
+            'updated_at',
+        )
+
+
+class ListingSerializer(serializers.ModelSerializer):
+    nft = NFTSerializer()
+    creator = AccountSerializer()
+    offers = OfferSerializer(many=True)
+
+    class Meta:
+        model = Listing
+        fields = (
+            'id',
+            'nft',
+            'creator',
+            'price',
+            'offers',
+            'create_tx_hash',
+            'update_tx_hash',
+            'created_at',
+            'updated_at',
+            'end_at',
+            'status',
+        )

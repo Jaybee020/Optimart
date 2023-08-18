@@ -7,7 +7,7 @@ from .serializers import CollectionSerializer, NFTSerializer
 
 
 class CollectionsAPIView(ListAPIView):
-    queryset = Collection.objects.get_queryset()
+    queryset = Collection.objects.select_related('issuer').prefetch_related('collection_attributes')
     serializer_class = CollectionSerializer
     filter_backends = (OrderingFilter,)
     ordering = ('daily_volume',)
@@ -15,7 +15,7 @@ class CollectionsAPIView(ListAPIView):
 
 
 class CollectionAPIView(RetrieveAPIView):
-    queryset = Collection.objects.get_queryset()
+    queryset = Collection.objects.select_related('issuer').prefetch_related('collection_attributes')
     serializer_class = CollectionSerializer
     lookup_fields = ('issuer', 'taxon')
 
@@ -30,14 +30,14 @@ class CollectionAPIView(RetrieveAPIView):
 
 
 class NFTAPIView(RetrieveAPIView):
-    queryset = NFT.objects.get_queryset()
+    queryset = NFT.objects.select_related('collection__issuer', 'owner').prefetch_related('nft_attributes')
     serializer_class = NFTSerializer
     lookup_field = 'token_identifier'
 
 
 class NFTsAPIView(ListAPIView):
-    queryset = NFT.objects.get_queryset()
+    queryset = NFT.objects.select_related('collection__issuer', 'owner').prefetch_related('nft_attributes')
     serializer_class = NFTSerializer
-    filter_backends = (NFTsFilter, OrderingFilter)
+    filterset_class = NFTsFilter
     ordering_fields = ('price', 'name')
     ordering = ('price',)
