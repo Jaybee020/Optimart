@@ -1,87 +1,64 @@
-import fs from 'fs';
-import path from 'path';
-
-import { parse } from 'csv-parse';
+import { JWT } from 'google-auth-library';
+import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
 
 import { NftService } from '../../utils';
 import prisma from '../index';
 
-/**
- * Validates command-line arguments for a specific use case.
- *
- * @param args - An array of strings representing the command-line arguments.
- *              It is expected to contain two elements: the first element
- *              should be `-p` or `--path`, and the second element should be
- *              the path to a directory.
- *
- * @throws {Error} If the number of arguments is not exactly 2, or if the first
- *                argument is not `-p` or `--path`, or if the second argument
- *                does not represent a valid directory path.
- *
- * @returns {string[]} The original array of command-line arguments if they pass
- *                    the validation.
- */
-function validateCommandLineArgs(args: string[]): string[] {
-	if (args.length !== 4) {
-		throw new Error('Arguments should be two e.g. `--path /home/johndoe/seeders');
-	}
+async function getSheet(sheetName: string): Promise<GoogleSpreadsheetWorksheet> {
+	const serviceAccountAuth = new JWT({
+		email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+		key: process.env.GOOGLE_PRIVATE_KEY,
+		scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+	});
 
-	if (!['-p', '--path'].includes(args[2])) {
-		throw new Error('The first argument must be either `-p` or `--path`');
-	}
-
-	if (!fs.statSync(path.resolve(args[3])).isDirectory()) {
-		throw new Error('The second argument provided is not a valid directory');
-	}
-
-	return args.splice(2);
+	const doc = new GoogleSpreadsheet(
+		'https://docs.google.com/spreadsheets/d/1K8CtvbgwpC4KpfPQJDM5GzP2_iZ2XRvKSQfufYwKBKk',
+		serviceAccountAuth,
+	);
+	await doc.loadInfo();
+	return doc.sheetsByTitle[sheetName];
 }
 
-/**
- * Loads issuer data from a CSV file and dumps it into the database.
- * @param csvPath - The path to the CSV file containing issuer data.
- * @returns A Promise that resolves once the data is dumped into the database.
- */
-async function dumpIssuersIntoDB(csvPath: string): Promise<void> {
-	const dataToDump = [];
-	const parser = fs.createReadStream(csvPath).pipe(parse({ from: 2 }));
+async function dumpIssuersIntoDB(): Promise<void> {
+	const issuers = [];
+	const issuersSheet = await getSheet('issuers');
 
-	for await (const entry of parser) {
-		const [, issuer] = entry;
-		dataToDump.push({ address: issuer });
+	for (const entry of await issuersSheet.getRows()) {
+		issuers.push({ address: entry.get('Address') });
 	}
 
-	await prisma.user.createMany({ data: dataToDump, skipDuplicates: true });
+	await prisma.user.createMany({ data: issuers, skipDuplicates: true });
 }
 
-/**
- * Loads NFT data from a CSV file and dumps it into the database.
- * @param csvPath - The path to the CSV file containing NFT data.
- * @returns A Promise that resolves once the data is dumped into the database.
- */
-async function dumpNFTsIntoDB(csvPath: string): Promise<void> {
+async function dumpCollectionsIntoDB(): Promise<void> {
+	const collections = [];
+	const collectionsMetadataSheet = await getSheet('collections_metadata');
+	for (const entry of await collectionsMetadataSheet.getRows()) {
+		collections.push({ address: entry.get('Address') });
+	}
+	// if (parseInt(taxon) !== 0) {
+	//   collections.push({
+	//     name: metadata.name,
+	//     taxon: parseInt(taxon),
+	//     issuer: issuer,
+	//     collectionId: collectionId,
+	//     description: metadata.description,
+	//   });
+	// }
+	await prisma.collection.createMany({ data: collections, skipDuplicates: true });
+}
+
+async function dumpNFTsIntoDB(): Promise<void> {
 	const nfts = [];
 	const owners = [];
-	const collections = [];
-	const parser = fs.createReadStream(csvPath).pipe(parse({ from: 2 }));
+	const allNftsSheet = await getSheet('all_nfts');
 
-	for await (const entry of parser) {
+	for (const entry of await allNftsSheet.getRows()) {
 		const [tokenId, issuer, owner, taxon, , , sequence, uri] = entry;
 		const collectionId = issuer + '-' + taxon;
 		const metadata = await NftService.resolveNFTMetadata(tokenId, uri, issuer);
 
 		owners.push({ address: owner });
-
-		if (parseInt(taxon) !== 0) {
-			collections.push({
-				name: metadata.name,
-				taxon: parseInt(taxon),
-				issuer: issuer,
-				collectionId: collectionId,
-				description: metadata.description,
-			});
-		}
-
 		nfts.push({
 			uri: uri,
 			owner: owner,
@@ -94,17 +71,13 @@ async function dumpNFTsIntoDB(csvPath: string): Promise<void> {
 	}
 
 	await prisma.user.createMany({ data: owners, skipDuplicates: true });
-	await prisma.collection.createMany({ data: collections, skipDuplicates: true });
-	await prisma.nft.createMany({ data: nfts });
+	await prisma.nft.createMany({ data: nfts, skipDuplicates: true });
 }
 
 async function main(): Promise<void> {
-	const [, seedDir] = validateCommandLineArgs(process.argv);
-	const issuersSeed = path.join(seedDir, 'issuers.csv');
-	const nftsSeed = path.join(seedDir, 'nfts.csv');
-
-	await dumpIssuersIntoDB(issuersSeed);
-	await dumpNFTsIntoDB(nftsSeed);
+	await dumpIssuersIntoDB();
+	await dumpCollectionsIntoDB();
+	await dumpNFTsIntoDB();
 }
 
 main();

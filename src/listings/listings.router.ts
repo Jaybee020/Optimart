@@ -1,9 +1,9 @@
 import { Router } from 'express';
 
-import { ListingController } from '../controllers';
+import ListingController from './listings.controller';
+import listingValidation from './listings.validator';
 import { validate, authenticateSignature } from '../middlewares';
 import { catchAsync } from '../utils';
-import listingValidation from '../validators/listing';
 
 const listingRouter = Router();
 

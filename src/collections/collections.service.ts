@@ -23,22 +23,10 @@ class CollectionService {
 		});
 	}
 
-	async all(limit: number, offset: number): Promise<Collection[]> {
-		return this.model.findMany({
-			skip: offset,
-			take: limit,
-			include: {
-				_count: {
-					select: { nfts: true },
-				},
-			},
-		});
-	}
-
 	async getById(id: string): Promise<Collection | null> {
 		return this.model.findUniqueOrThrow({
 			where: {
-				id: id,
+				collectionId: id,
 			},
 			include: {
 				_count: {
@@ -51,7 +39,7 @@ class CollectionService {
 	async getTokens(id: string, limit: number, offset: number): Promise<CollectionTokensData | null> {
 		return this.model.findFirst({
 			where: {
-				id: id,
+				collectionId: id,
 			},
 			select: {
 				name: true,

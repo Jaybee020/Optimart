@@ -4,9 +4,12 @@ import helmet from 'helmet';
 import httpStatus from 'http-status';
 import swaggerUi from 'swagger-ui-express';
 
+import collectionRouter from './collections/collections.router';
 import swaggerDocument from './docs/swagger.json';
+import listingRouter from './listings/listings.router';
 import { morgan, errorHandler, errorConverter } from './middlewares';
-import { pingRouter, collectionRouter, listingRouter, tokenRouter } from './routes';
+import tokenRouter from './nfts/nfts.router';
+import pingRouter from './ping/ping.router';
 import ApiError from './utils/api-error';
 
 const application: Application = express();
