@@ -5,14 +5,14 @@ from .models import NFT
 
 
 class NFTsFilter(filters.FilterSet):
+    attributes = filters.CharFilter(method='filter_attributes')
     name = filters.CharFilter(field_name='name', lookup_expr='icontains')
     status = filters.CharFilter(field_name='status', lookup_expr='exact')
     min_price = filters.NumberFilter(field_name='price', lookup_expr='gte')
     max_price = filters.NumberFilter(field_name='price', lookup_expr='lte')
+    attributes_count = filters.NumberFilter(method='filter_attributes_count')
     taxon = filters.NumberFilter(field_name='collection__taxon', lookup_expr='exact')
     issuer = filters.CharFilter(field_name='collection__issuer__address', lookup_expr='exact')
-    attributes = filters.CharFilter(method='filter_attributes')
-    attributes_count = filters.NumberFilter(method='filter_attributes_count')
 
     def filter_attributes_count(self, queryset, name, value):  # noqa: ARG002
         return queryset.annotate(attributes_count=Count('nft_attributes')).filter(attributes_count=value)

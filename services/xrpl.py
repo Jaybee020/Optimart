@@ -12,7 +12,6 @@ client = JsonRpcClient('https://xrplcluster.com/')
 
 
 def create_listing(token_id: str, amount: Decimal, expiration: datetime) -> NFTokenCreateOffer:
-    """Creates a listing/auction."""
     return NFTokenCreateOffer(
         nftoken_id=token_id,
         amount=xrp_to_drops(amount),

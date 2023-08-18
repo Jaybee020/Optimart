@@ -12,9 +12,8 @@ from .enums import ListingStatus, ListingType, OfferStatus
 from .models import Listing, Offer
 
 
-class CreateListingSerializer(serializers.Serializer):
+class BaseNFTokenCreateOfferSerializer(serializers.Serializer):
     tx_hash = serializers.CharField(required=True)
-    listing_type = serializers.ChoiceField(choices=ListingType.choices, required=True)
 
     def validate(self, attrs):
         response = get_transaction_info(attrs['tx_hash'])
@@ -27,32 +26,39 @@ class CreateListingSerializer(serializers.Serializer):
         if response.result['TransactionType'] != 'NFTokenCreateOffer':
             raise serializers.ValidationError(f'Invalid transaction type of {response.result["TransactionType"]}')
 
+        if response.result['Destination'] != 'my-address':
+            raise serializers.ValidationError(f'Invalid destination address: {response.result["Destination"]}')
+
+        ripple_expiration_ts = response.result.get('Expiration')
+        if ripple_expiration_ts is not None and timezone.now() > ripple_time_to_datetime(ripple_expiration_ts):
+            raise serializers.ValidationError('Invalid expiration time set')
+
+        return {'tx_info': response.result}
+
+
+class CreateListingSerializer(BaseNFTokenCreateOfferSerializer):
+    listing_type = serializers.ChoiceField(choices=ListingType.choices, required=True)
+
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        tx_info = validated_data['tx_info']
+
         try:
-            nft = NFT.objects.get(token_identifier=response.result['NFTokenID'])
+            nft = NFT.objects.get(token_identifier=tx_info['NFTokenID'])
         except NFT.DoesNotExist as e:
             raise serializers.ValidationError(f'{e!s}') from e
 
         if nft.listings.filter(status=ListingStatus.ONGOING).exists():
             raise serializers.ValidationError('Cancel ongoing listing before creating a new one')
 
-        if response.result['Destination'] != 'my-address':
-            raise serializers.ValidationError(f'Invalid destination address: {response.result["Destination"]}')
+        if tx_info['Flags'] != 1:
+            raise serializers.ValidationError(f'Invalid flags: {tx_info["Flags"]}')
 
-        if response.result['Flags'] != 1:
-            raise serializers.ValidationError(f'Invalid flags: {response.result["Flags"]}')
-
-        if attrs['listing_type'] == ListingType.AUCTION and response.result.get('Expiration') is None:
+        if attrs['listing_type'] == ListingType.AUCTION and tx_info.get('Expiration') is None:
             raise serializers.ValidationError('Missing expiration for auction')
 
-        ripple_expiration_ts = response.result.get('Expiration')
-        if ripple_expiration_ts is not None and timezone.now() > ripple_time_to_datetime(ripple_expiration_ts):
-            raise serializers.ValidationError('Invalid expiration time set')
-
-        return {
-            'nft': nft,
-            'tx_info': response.result,
-            'listing_type': attrs['listing_type'],
-        }
+        validated_data.update({'nft': nft, 'listing_type': attrs['listing_type']})
+        return validated_data
 
     def create(self, validated_data):
         listing = Listing(
@@ -71,45 +77,28 @@ class CreateListingSerializer(serializers.Serializer):
         return listing
 
 
-class CreateOfferSerializer(serializers.Serializer):
-    tx_hash = serializers.CharField(required=True)
+class CreateOfferSerializer(BaseNFTokenCreateOfferSerializer):
     listing_id = serializers.IntegerField(required=True)
 
     def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        tx_info = validated_data['tx_info']
+
         try:
             listing = Listing.objects.get(id=attrs['listing_id'])
         except Listing.DoesNotExist as e:
             raise serializers.ValidationError(f'{e!s}') from e
 
-        response = get_transaction_info(attrs['tx_hash'])
-        if response.status == ResponseStatus.ERROR:
-            raise serializers.ValidationError(f'{response.result["error_message"]}')
-
-        if self.context['request'].user.address != response.result['Account']:
-            raise serializers.ValidationError('Provided transaction hash was not performed by authenticated user')
-
-        if response.result['TransactionType'] != 'NFTokenCreateOffer':
-            raise serializers.ValidationError(f'Invalid transaction type of {response.result["TransactionType"]}')
-
-        if response.result['NFTokenID'] != listing.nft.token_identifier:
+        if tx_info['NFTokenID'] != listing.nft.token_identifier:
             raise serializers.ValidationError(
-                f'NFToken ID mismatch i.e. {response.result["NFTokenID"]} != {listing.nft.token_identifier}',
+                f'NFToken ID mismatch i.e. {tx_info["NFTokenID"]} != {listing.nft.token_identifier}',
             )
 
-        if response.result['Destination'] != 'my-address':
-            raise serializers.ValidationError(f'Invalid destination address: {response.result["Destination"]}')
+        if tx_info['Flags'] != 0:
+            raise serializers.ValidationError(f'Invalid flags: {tx_info["Flags"]}')
 
-        if response.result['Flags'] != 0:
-            raise serializers.ValidationError(f'Invalid flags: {response.result["Flags"]}')
-
-        ripple_expiration_ts = response.result.get('Expiration')
-        if ripple_expiration_ts is not None and timezone.now() > ripple_time_to_datetime(ripple_expiration_ts):
-            raise serializers.ValidationError('Invalid expiration time set')
-
-        return {
-            'listing': listing,
-            'tx_info': response.result,
-        }
+        validated_data.update({'listing': listing})
+        return validated_data
 
     def create(self, validated_data):
         offer = Offer(
