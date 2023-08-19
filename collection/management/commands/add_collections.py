@@ -62,6 +62,10 @@ class Command(BaseCommand):
         self.stdout.write('Fetching NFTs for collections...')
         for row in self.collections_from_csv:
             collection = Collection.objects.get(issuer__address=row['Issuer'], taxon=int(row['Taxon']))
+            if collection.nft_set.count() == int(row['NftsCount']):
+                self.stdout.write(f'NFTs for collection {collection.id} already populated. Moving on...')
+                continue
+
             nfts = self.fetch_nfts_for_collection_from_onxrp(
                 nfts_count=int(row['NftsCount']) + 1,
                 onxrp_id=row['OnXrpID'],
