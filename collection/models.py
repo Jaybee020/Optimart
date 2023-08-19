@@ -19,11 +19,11 @@ class Collection(models.Model):
     weekly_volume = models.DecimalField('weekly volume', max_digits=24, decimal_places=6, blank=False, null=False)
     monthly_volume = models.DecimalField('monthly volume', max_digits=24, decimal_places=6, blank=False, null=False)
     total_volume = models.DecimalField('total volume', max_digits=24, decimal_places=6, blank=False, null=False)
-    image_url = models.URLField('image url', blank=True, null=True)
-    banner_url = models.URLField('banner url', blank=True, null=True)
-    discord_link = models.URLField('discord link', blank=True, null=True)
-    instagram_link = models.URLField('instagram link', blank=True, null=True)
-    twitter_link = models.URLField('twitter link', blank=True, null=True)
+    image_url = models.URLField('image url', max_length=1000, blank=True, null=True)
+    banner_url = models.URLField('banner url', max_length=1000, blank=True, null=True)
+    discord_link = models.URLField('discord link', max_length=1000, blank=True, null=True)
+    instagram_link = models.URLField('instagram link', max_length=1000, blank=True, null=True)
+    twitter_link = models.URLField('twitter link', max_length=1000, blank=True, null=True)
 
     class Meta:
         constraints: ClassVar[list] = [models.UniqueConstraint(fields=['issuer', 'taxon'], name='unique_collection')]

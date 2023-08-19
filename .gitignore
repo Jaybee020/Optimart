@@ -96,3 +96,4 @@ dmypy.json
 .pytype/
 cython_debug/
 .env.dev
+.ruff_cache

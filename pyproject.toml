@@ -18,6 +18,8 @@ django-cors-headers = "^4.2.0"
 redis = "^5.0.0"
 xrpl-py = "^2.2.0"
 psycopg2-binary = "^2.9.7"
+requests = "^2.31.0"
+gunicorn = "^21.2.0"
 
 
 [tool.poetry.group.dev.dependencies]

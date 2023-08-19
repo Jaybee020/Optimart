@@ -22,7 +22,10 @@ class CollectionAPIView(RetrieveAPIView):
     def get_object(self):
         filters = {}
         for field in self.lookup_fields:
-            filters[field] = self.kwargs[field]
+            if field == 'issuer':
+                filters['issuer__address'] = self.kwargs[field]
+            else:
+                filters[field] = self.kwargs[field]
 
         obj = get_object_or_404(self.get_queryset(), **filters)
         self.check_object_permissions(self.request, obj)
