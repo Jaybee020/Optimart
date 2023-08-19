@@ -156,6 +156,7 @@ class OfferAPIView(GenericAPIView, RetrieveModelMixin):
                 offer.save()
                 # todo: background task to accept the offer on-chain
                 # add the tx hash for the cancellation.
+                # switch the owner of the nfts.
 
                 Offer.objects.filter(listing=offer.listing, status=OfferStatus.PENDING).update(
                     status=OfferStatus.REJECTED,
