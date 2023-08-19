@@ -7,7 +7,7 @@ import requests
 
 from django.conf import settings
 from django.core.management import BaseCommand
-from django.db import connection, transaction
+from django.db import transaction
 
 from accounts.models import Account
 from collection.models import NFT, Collection, NFTAttribute, NFTStatus
@@ -60,79 +60,15 @@ class Command(BaseCommand):
     @transaction.atomic
     def load_nfts(self):
         self.stdout.write('Fetching NFTs for collections...')
-        for row in self.collections_from_csv[1:2]:
+        for row in self.collections_from_csv:
             collection = Collection.objects.get(issuer__address=row['Issuer'], taxon=int(row['Taxon']))
             nfts = self.fetch_nfts_for_collection_from_onxrp(
                 nfts_count=int(row['NftsCount']) + 1,
                 onxrp_id=row['OnXrpID'],
             )
-            self.add_nfts_to_database_raw_sql(collection, nfts)
+            self.add_nfts_to_database(collection, nfts)
 
-    def add_nfts_to_database_raw_sql(self, collection: Collection, nfts_response: list) -> None:
-        self.stdout.write(f'Adding NFTs for collection {collection.id} to the database...')
-        nfts_to_attributes = {}
-
-        with connection.cursor() as cursor:
-            nft_insert_sql = """
-                INSERT INTO yourapp_nft (
-                    owner_id,
-                    name,
-                    uri,
-                    collection_id,
-                    status,
-                    flags,
-                    sequence,
-                    image_url,
-                    token_identifier,
-                    price
-                )
-                VALUES %s
-            """
-            nft_values = []
-            for entry in nfts_response:
-                owner_address = entry['owner']['wallet_id']
-                owner, _ = Account.objects.get_or_create(address=owner_address, defaults={'address': owner_address})
-                nft_values.append(
-                    (
-                        owner.id,
-                        entry['name'],
-                        entry['ipfs_url'],
-                        collection.id,
-                        NFTStatus.UNLISTED.value,
-                        8,
-                        int(entry['serial']),
-                        entry['picture_url'],
-                        entry['token_id'],
-                        str(Decimal(entry['fixed_price'])),
-                    ),
-                )
-                nfts_to_attributes[entry['token_id']] = [
-                    {'key': i['key'], 'value': i['value']} for i in entry['nftAttributes']
-                ]
-            cursor.executemany(nft_insert_sql, nft_values)
-            self.stdout.write(f'NFTs for collection {collection.id} added to the database.')
-
-            attribute_insert_sql = """
-                INSERT INTO yourapp_nftattribute (collection_id, nft_id, key, value)
-                VALUES %s
-            """
-            attribute_values = []
-            for token_id, attributes in nfts_to_attributes.items():
-                nft = NFT.objects.get(token_identifier=token_id)
-                attribute_values.extend(
-                    (
-                        collection.id,
-                        nft.id,
-                        i['key'],
-                        i['value'],
-                    )
-                    for i in attributes
-                )
-            cursor.executemany(attribute_insert_sql, attribute_values)
-
-        self.stdout.write('NFT attributes added to the database.')
-
-    def add_nfts_to_database_orm(self, collection: Collection, nfts_response: list) -> None:
+    def add_nfts_to_database(self, collection: Collection, nfts_response: list) -> None:
         self.stdout.write(f'Adding NFTs for collection {collection.id} to the database...')
         nft_objs = []
         nfts_to_attributes = {}
