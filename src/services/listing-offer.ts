@@ -44,12 +44,32 @@ class ListingOfferService {
 		});
 	}
 
+	async getByListing(listingId: string): Promise<ListingOffer[]> {
+		return this.model.findMany({
+			where: {
+				listingId: listingId,
+			},
+		});
+	}
+
 	async create(data: Prisma.ListingOfferCreateInput): Promise<ListingOffer> {
 		return this.model.create({ data: data });
 	}
 
 	async update(id: string, data: Prisma.ListingOfferUpdateInput): Promise<ListingOffer> {
 		return this.model.update({ where: { id: id }, data: data });
+	}
+
+	async cancel(id: string, txHash: string): Promise<ListingOffer> {
+		return this.update(id, { status: 'CANCELLED', updateTxnHash: txHash });
+	}
+
+	async accept(id: string, txHash: string): Promise<ListingOffer> {
+		return this.update(id, { status: 'ACCEPTED', updateTxnHash: txHash });
+	}
+
+	async reject(id: string, txHash: string): Promise<ListingOffer> {
+		return this.update(id, { status: 'REJECTED', updateTxnHash: txHash });
 	}
 }
 

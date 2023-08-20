@@ -58,6 +58,7 @@ model Listing {
   type        ListingType
   createTxnHash String 
   updateTxnHash String?
+  sellOfferId  String
 
   offers ListingOffer[]
 
@@ -78,6 +79,8 @@ model ListingOffer {
   status      OfferStatus @default(PENDING)
   createTxnHash String @unique()
   updateTxnHash String? @unique()
+  buyOfferId  String
+
 
   listing Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
   nft      Nft    @relation(fields: [nftId], references: [tokenId], onDelete: Cascade)

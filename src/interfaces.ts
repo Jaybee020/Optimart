@@ -1,5 +1,5 @@
 import { Nft } from '@prisma/client';
-import { Transaction, TransactionMetadata } from 'xrpl';
+import { NFTokenCreateOffer, Transaction, TransactionMetadata } from 'xrpl';
 import { LedgerIndex, NFTOffer } from 'xrpl/dist/npm/models/common';
 import { BaseResponse } from 'xrpl/dist/npm/models/methods/baseMethod';
 
@@ -13,6 +13,9 @@ export interface NFTMetadata {
 interface NFTMetadataAttribute {
 	name: string;
 	value: string;
+}
+export interface NFTCreateOfferWithId extends NFTokenCreateOffer {
+	id: string;
 }
 
 export interface NFTHistoryTxnsResponse extends BaseResponse {
