@@ -46,7 +46,16 @@ def handle_500(request):  # noqa: ARG001
     )
 
 
+def handle_404(request, exception):  # noqa: ARG001
+    return JsonResponse(
+        data={'detail': 'Not found'},
+        status=status.HTTP_404_NOT_FOUND,
+    )
+
+
 handler500 = handle_500
+
+handler404 = handle_404
 
 urlpatterns = [
     path('admin/', admin.site.urls),
