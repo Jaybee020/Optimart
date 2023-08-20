@@ -15,7 +15,7 @@ class CollectionsAPIView(ListAPIView):
 
 
 class CollectionAttributesAPIView(RetrieveAPIView):
-    queryset = Collection.objects.prefetch_related('collection_attributes')
+    queryset = Collection.objects.prefetch_related('nft_set')
     serializer_class = CollectionAttributesSerializer
     lookup_fields = ('issuer', 'taxon')
 
@@ -51,13 +51,13 @@ class CollectionAPIView(RetrieveAPIView):
 
 
 class NFTAPIView(RetrieveAPIView):
-    queryset = NFT.objects.select_related('collection__issuer', 'owner').prefetch_related('nft_attributes')
+    queryset = NFT.objects.select_related('collection__issuer', 'owner').prefetch_related('attributes')
     serializer_class = NFTSerializer
     lookup_field = 'token_identifier'
 
 
 class NFTsAPIView(ListAPIView):
-    queryset = NFT.objects.select_related('collection__issuer', 'owner').prefetch_related('nft_attributes')
+    queryset = NFT.objects.select_related('collection__issuer', 'owner').prefetch_related('attributes')
     serializer_class = NFTSerializer
     filterset_class = NFTsFilter
     ordering_fields = ('price', 'name')

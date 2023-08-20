@@ -34,7 +34,7 @@ class OngoingListingCheckView(APIView):
 
 
 class ListingsAPIView(GenericAPIView, CreateModelMixin, ListModelMixin):
-    queryset = Listing.objects.select_related('creator', 'nft__nft_attributes', 'nft__owner').prefetch_related(
+    queryset = Listing.objects.select_related('creator', 'nft__attributes', 'nft__owner').prefetch_related(
         'offers__creator',
     )
 
@@ -51,7 +51,7 @@ class ListingsAPIView(GenericAPIView, CreateModelMixin, ListModelMixin):
 class ListingAPIView(RetrieveDestroyAPIView):
     queryset = Listing.objects.select_related('creator', 'nft__owner').prefetch_related(
         'offers__creator',
-        'nft__nft_attributes',
+        'nft__attributes',
     )
 
     lookup_field = 'id'

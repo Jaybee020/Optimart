@@ -20,7 +20,7 @@ class NFTsFilter(filters.FilterSet, OrderingFilter):
     issuer = filters.CharFilter(field_name='collection__issuer__address', lookup_expr='exact')
 
     def filter_attributes_count(self, queryset, name, value):  # noqa: ARG002
-        return queryset.annotate(attributes_count=Count('nft_attributes')).filter(attributes_count=value)
+        return queryset.annotate(attributes_count=Count('attributes')).filter(attributes_count=value)
 
     def filter_attributes(self, queryset, name, value):  # noqa: ARG002
         attribute_pairs = value.split(',')
@@ -28,8 +28,8 @@ class NFTsFilter(filters.FilterSet, OrderingFilter):
 
         for pair in attribute_pairs:
             key, val = pair.split(':')
-            filters['nft_attributes__key'] = key
-            filters['nft_attributes__value'] = key
+            filters['attributes__key'] = key
+            filters['attributes__value'] = key
 
         return queryset.filter(**filters)
 

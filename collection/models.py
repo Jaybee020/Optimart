@@ -49,13 +49,6 @@ class NFT(models.Model):
 
 
 class NFTAttribute(models.Model):
-    collection = models.ForeignKey(
-        Collection,
-        related_name='collection_attributes',
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True,
-    )
-    nft = models.ForeignKey(NFT, related_name='nft_attributes', on_delete=models.CASCADE, blank=False, null=False)
+    nft = models.ForeignKey(NFT, related_name='attributes', on_delete=models.CASCADE, blank=False, null=False)
     key = models.TextField('key', db_index=True, blank=False, null=False)
     value = models.TextField('value', db_index=True, blank=True, null=True)

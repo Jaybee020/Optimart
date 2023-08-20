@@ -1,3 +1,6 @@
+from django.db.models import CharField, Value
+from django.db.models.functions import Concat
+
 from rest_framework import serializers
 
 from accounts.serializers import AccountSerializer
@@ -12,7 +15,24 @@ class NFTAttributeSerializer(serializers.ModelSerializer):
 
 
 class CollectionAttributesSerializer(serializers.ModelSerializer):
-    attributes = NFTAttributeSerializer(many=True, source='collection_attributes')
+    attributes = serializers.SerializerMethodField()
+
+    def get_attributes(self, obj: Collection):
+        # Due to duplicates in attributes caused by data import,
+        # this approach handles unique combinations without adding a unique constraint.
+        # Adding a unique constraint could break existing data, so this workaround is employed for now.
+        attrs = (
+            obj.nft_set.all()
+            .annotate(
+                combined_attr=Concat('attributes__key', Value(':'), 'attributes__value', output_field=CharField()),
+            )
+            .values('combined_attr')
+            .distinct()
+        )
+        return [
+            {'key': attribute['combined_attr'].split(':')[0], 'value': attribute['combined_attr'].split(':')[1]}
+            for attribute in attrs
+        ]
 
     class Meta:
         model = Collection
@@ -60,7 +80,7 @@ class CollectionSerializer(serializers.ModelSerializer):
 
 class NFTSerializer(serializers.ModelSerializer):
     owner = AccountSerializer()
-    nft_attributes = NFTAttributeSerializer(many=True)
+    attributes = NFTAttributeSerializer(many=True)
     collection = MinimalCollectionSerializer()
 
     class Meta:
@@ -76,5 +96,5 @@ class NFTSerializer(serializers.ModelSerializer):
             'flags',
             'image_url',
             'status',
-            'nft_attributes',
+            'attributes',
         )
