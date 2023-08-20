@@ -23,7 +23,7 @@ from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
 
-from rest_framework import permissions
+from rest_framework import permissions, status
 
 logger = getLogger(__name__)
 
@@ -40,7 +40,10 @@ schema_view = get_schema_view(
 
 
 def handle_500(request):  # noqa: ARG001
-    return JsonResponse(data={'detail': "We're sorry, but something went wrong on our end"})
+    return JsonResponse(
+        data={'detail': "We're sorry, but something went wrong on our end"},
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
 
 
 handler500 = handle_500

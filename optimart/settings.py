@@ -207,7 +207,7 @@ HUEY = RedisHuey(
 
 
 # ==============================================================================
-# HUEY SETTINGS
+# LOGGING SETTINGS
 # ==============================================================================
 LOGGING = {
     'version': 1,
@@ -236,6 +236,21 @@ LOGGING = {
             'level': 'ERROR',
             'handlers': ['console'],
             'propagate': True,
+        },
+    },
+}
+
+
+# ==============================================================================
+# DRF-YASG SETTINGS
+# ==============================================================================
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'wallet_signature': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization',
         },
     },
 }
