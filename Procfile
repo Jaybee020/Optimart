@@ -1,2 +1,2 @@
-web: gunicorn optimart.wsgi:application --max-requests 1200
-release: python manage.py migrate
+web: gunicorn optimart.wsgi
+release: python manage.py migrate && python manage.py collectstatic --noinput

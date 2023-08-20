@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Isaac Adewumi <ienioladewumi@gmail.com>"]
 readme = "README.md"
-packages = [{include = "optimart_django"}]
+packages = []
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -20,6 +20,7 @@ xrpl-py = "^2.2.0"
 psycopg2-binary = "^2.9.7"
 requests = "^2.31.0"
 gunicorn = "^21.2.0"
+whitenoise = "^6.5.0"
 
 
 [tool.poetry.group.dev.dependencies]
