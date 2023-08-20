@@ -107,6 +107,15 @@ class CreateOfferSerializer(BaseNFTokenCreateOfferSerializer):
                 raise serializers.ValidationError(
                     f'NFToken ID mismatch i.e. {tx_info["NFTokenID"]} != {listing.nft.token_identifier}',
                 )
+
+            if listing.end_at is not None and listing.end_at >= timezone.now():
+                listing.status = ListingStatus.CANCELLED
+                listing.save()
+                raise serializers.ValidationError('Listing has expired')
+
+            if listing.listing_type == ListingType.AUCTION and drops_to_xrp(tx_info['amount']) < listing.price:
+                raise serializers.ValidationError('Auction bid must not be less than starting price')
+
             nft = listing.nft
         else:
             try:
