@@ -1,3 +1,6 @@
+from logging import getLogger
+
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
@@ -9,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from collection.models import NFTStatus
+from services.xrpl import XRPLClient
 
 from .enums import ListingStatus, OfferStatus
 from .filters import ReceivedOffersFilter, SentOffersFilter
@@ -20,6 +24,12 @@ from .serializers import (
     CreateOfferSerializer,
     ListingSerializer,
     OfferSerializer,
+)
+
+logger = getLogger(__name__)
+xrpl_client = XRPLClient(
+    url=settings.XRPL_NODE_URL,
+    seed=settings.XRPL_WALLET_SEED,
 )
 
 
@@ -76,15 +86,36 @@ class ListingAPIView(RetrieveDestroyAPIView):
                 status=status.HTTP_200_OK,
             )
 
-        # TODO: add a background job to cancel the offers and listing.
-        # also add the tx hash of the cancellation.
-        listing.status = ListingStatus.CANCELLED
-        listing.nft.status = NFTStatus.UNLISTED
-        listing.offers.filter(status=OfferStatus.PENDING).update(
-            status=OfferStatus.CANCELLED,
-            updated_at=timezone.now(),
-        )
-        listing.nft.save()
+        try:
+            response = xrpl_client.cancel_listing(
+                sell_offer_id=listing.sell_offer_id,
+                buy_offer_ids=listing.offers.values_list('buy_offer_id', flat=True),
+            )
+        except Exception as e:
+            logger.exception('Listing cancellation failed due to node exception', exc_info=e)
+            return Response(
+                data={'detail': 'Listing cancellation failed due to xrpl node exception'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        if response.result['meta']['TransactionResult'] != 'tesSUCCESS':
+            return Response(
+                data={'detail': f'Listing cancellation failed with {response.result["error_message"]}'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        with transaction.atomic():
+            listing.status = ListingStatus.CANCELLED
+            listing.update_tx_hash = response.result['hash']
+            listing.nft.status = NFTStatus.UNLISTED
+            listing.offers.filter(status=OfferStatus.PENDING).update(
+                updated_at=timezone.now(),
+                status=OfferStatus.CANCELLED,
+                update_tx_hash=response.result['hash'],
+            )
+            listing.nft.save()
+            listing.save()
+
         return Response(
             data={'detail': 'Listing cancelled successfully'},
             status=status.HTTP_200_OK,
@@ -92,10 +123,9 @@ class ListingAPIView(RetrieveDestroyAPIView):
 
 
 class SentOffersAPIView(ListAPIView):
+    queryset = Offer.objects.select_related('creator', 'listing__nft__owner', 'listing__nft__collection__issuer')
     serializer_class = OfferSerializer
     filterset_class = SentOffersFilter
-
-    queryset = Offer.objects.select_related('creator', 'listing__nft__owner', 'listing__nft__collection__issuer')
 
 
 class CreateOfferAPIView(CreateAPIView):
@@ -103,10 +133,9 @@ class CreateOfferAPIView(CreateAPIView):
 
 
 class ReceivedOffersAPIView(ListAPIView):
+    queryset = Offer.objects.select_related('creator', 'listing__nft__owner', 'listing__nft__collection__issuer')
     serializer_class = OfferSerializer
     filterset_class = ReceivedOffersFilter
-
-    queryset = Offer.objects.select_related('creator', 'listing__nft__owner', 'listing__nft__collection__issuer')
 
 
 class OfferAPIView(GenericAPIView, RetrieveModelMixin):
@@ -145,10 +174,24 @@ class OfferAPIView(GenericAPIView, RetrieveModelMixin):
                 status=status.HTTP_200_OK,
             )
 
+        try:
+            response = xrpl_client.cancel_offer(buy_offer_id=offer.buy_offer_id)
+        except Exception as e:
+            logger.exception('Offer cancellation failed due to node exception', exc_info=e)
+            return Response(
+                data={'detail': 'Offer cancellation failed due to xrpl node exception'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        if response.result['meta']['TransactionResult'] != 'tesSUCCESS':
+            return Response(
+                data={'detail': f'Offer cancellation failed with {response.result["error_message"]}'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
         offer.status = OfferStatus.CANCELLED
+        offer.update_tx_hash = response.result['hash']
         offer.save()
-        # TODO: Cancel the offer on the XRPL blockchain using a background job.
-        # add the tx hash for the cancellation.
         return Response(data={'detail': 'Offer cancelled successfully'}, status=status.HTTP_200_OK)
 
     def patch(self, request):
@@ -158,6 +201,11 @@ class OfferAPIView(GenericAPIView, RetrieveModelMixin):
 
         if serializer.data['action'] == 'accept':
             with transaction.atomic():
+                xrpl_client.accept_offer(
+                    buy_amount=offer.amount,
+                    buy_offer_id=offer.buy_offer_id,
+                    sell_offer_id=offer.listing.sell_offer_id,
+                )
                 offer.status = OfferStatus.ACCEPTED
                 offer.listing.status = ListingStatus.COMPLETED
                 offer.listing.save()
@@ -174,8 +222,22 @@ class OfferAPIView(GenericAPIView, RetrieveModelMixin):
                 # add the tx hash for the cancellation.
                 return Response(data={'detail': 'Offer accepted successfully'}, status=status.HTTP_200_OK)
 
+        try:
+            response = xrpl_client.cancel_offer(buy_offer_id=offer.buy_offer_id)
+        except Exception as e:
+            logger.exception('Offer rejection failed due to node exception', exc_info=e)
+            return Response(
+                data={'detail': 'Offer rejection failed due to xrpl node exception'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        if response.result['meta']['TransactionResult'] != 'tesSUCCESS':
+            return Response(
+                data={'detail': f'Offer rejection failed with {response.result["error_message"]}'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
         offer.status = OfferStatus.REJECTED
+        offer.update_tx_hash = response.result['hash']
         offer.save()
-        # todo: background task to cancel the offer on-chain
-        # add the tx hash for the cancellation.
         return Response(data={'detail': 'Offer rejected successfully'}, status=status.HTTP_200_OK)

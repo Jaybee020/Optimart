@@ -254,3 +254,11 @@ SWAGGER_SETTINGS = {
         },
     },
 }
+
+
+# ==============================================================================
+# XRPL RELATED SETTINGS
+# ==============================================================================
+XRPL_NODE_URL = env.str('XRPL_NODE_URL')
+
+XRPL_WALLET_SEED = env.str('XRPL_WALLET_SEED')

@@ -33,6 +33,8 @@ class Listing(models.Model):
     # holds the transaction hash for the NFTokenAcceptOffer/NFTokenCancelOffer
     update_tx_hash = models.CharField('update transaction hash', max_length=255, blank=True, null=True)
 
+    sell_offer_id = models.CharField('sell offer id', max_length=300, blank=False, null=False)
+
     created_at = models.DateTimeField('created at', blank=False, null=False)
     updated_at = models.DateTimeField('updated at', auto_now=True)
     status = models.CharField('status', max_length=10, choices=ListingStatus.choices, blank=False, null=False)
@@ -55,6 +57,8 @@ class Offer(models.Model):
     create_tx_hash = models.CharField('create transaction hash', max_length=255, blank=False, null=False)
     # holds the transaction hash for the NFTokenAcceptOffer/NFTokenCancelOffer
     update_tx_hash = models.CharField('update transaction hash', max_length=255, blank=True, null=True)
+
+    buy_offer_id = models.CharField('buy offer id', max_length=300, blank=False, null=False)
 
     created_at = models.DateTimeField('created at', auto_now_add=True)
     updated_at = models.DateTimeField('updated at', auto_now=True)
