@@ -215,7 +215,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s',
+            'format': '[%(asctime)s] %(levelname)s:%(module)s:%(process)d-%(threadName)s:%(message)s'
         },
     },
     'handlers': {
@@ -235,8 +235,13 @@ LOGGING = {
         'django.security.DisallowedHost': {
             'level': 'ERROR',
             'handlers': ['console'],
-            'propagate': True,
+            'propagate': False,
         },
+        'huey.consumer': {
+            'level': 'INFO',
+            'handlers': ['console'],
+            'propagate': False,
+        }
     },
 }
 

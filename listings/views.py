@@ -16,6 +16,7 @@ from services.xrpl import XRPLClient
 
 from .enums import ListingStatus, OfferStatus
 from .filters import ReceivedOffersFilter, SentOffersFilter
+from .mixins import OfferActionsMixin
 from .models import Listing, Offer
 from .permissions import IsListingOwner, IsOfferForListingOwner, IsOfferOwner
 from .serializers import (
@@ -63,7 +64,6 @@ class ListingAPIView(RetrieveDestroyAPIView):
         'offers__creator',
         'nft__attributes',
     )
-
     lookup_field = 'id'
 
     def get_permissions(self):
@@ -138,7 +138,7 @@ class ReceivedOffersAPIView(ListAPIView):
     filterset_class = ReceivedOffersFilter
 
 
-class OfferAPIView(GenericAPIView, RetrieveModelMixin):
+class OfferAPIView(GenericAPIView, RetrieveModelMixin, OfferActionsMixin):
     queryset = Offer.objects.select_related(
         'creator',
         'listing__creator',
@@ -175,26 +175,17 @@ class OfferAPIView(GenericAPIView, RetrieveModelMixin):
             )
 
         try:
-            response = xrpl_client.cancel_offers(buy_offer_ids=[offer.buy_offer_id])
+            self.cancel_offers([offer])
         except Exception as e:
-            logger.exception('Offer cancellation failed due to node exception', exc_info=e)
+            logger.exception('An exception occurred', exc_info=e)
             return Response(
-                data={'detail': 'Offer cancellation failed due to xrpl node exception'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        if response.result['meta']['TransactionResult'] != 'tesSUCCESS':
-            return Response(
-                data={'detail': f'Offer cancellation failed with {response.result["error_message"]}'},
+                data={'detail': 'Error occurred during offer cancellation'},
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        offer.status = OfferStatus.CANCELLED
-        offer.update_tx_hash = response.result['hash']
-        offer.save()
         return Response(data={'detail': 'Offer cancelled successfully'}, status=status.HTTP_200_OK)
 
-    def patch(self, request):  # noqa: PLR0911
+    def patch(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         offer = serializer.data['offer']
@@ -202,80 +193,28 @@ class OfferAPIView(GenericAPIView, RetrieveModelMixin):
         if serializer.data['action'] == 'accept':
             with transaction.atomic():
                 try:
-                    response = xrpl_client.accept_offer(
-                        buy_amount=offer.amount,
-                        buy_offer_id=offer.buy_offer_id,
-                        sell_offer_id=offer.listing.sell_offer_id if offer.listing is not None else None,
-                    )
+                    self.accept_offer(offer)
                 except Exception as e:
-                    logger.exception('Offer acceptance failed due to node exception', exc_info=e)
+                    logger.exception('An exception occurred', exc_info=e)
                     return Response(
-                        data={'detail': 'Offer acceptance failed due to xrpl node exception'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    )
-
-                if response.result['meta']['TransactionResult'] != 'tesSUCCESS':
-                    return Response(
-                        data={'detail': f'Offer acceptance failed with {response.result["error_message"]}'},
+                        data={'detail': 'Error occurred during offer acceptance'},
                         status=status.HTTP_502_BAD_GATEWAY,
                     )
 
-                offer.status = OfferStatus.ACCEPTED
-                offer.update_tx_hash = response.result['hash']
-                if offer.listing:
-                    offer.listing.status = ListingStatus.COMPLETED
-                    offer.listing.update_tx_hash = response.result['hash']
-
-                offer.nft.owner = offer.creator
-                offer.nft.status = NFTStatus.UNLISTED
-                offer.listing.save()
-                offer.nft.save()
-                offer.save()
-
-            with transaction.atomic():
-                offers_to_cancel = Offer.objects.filter(listing=offer.listing, status=OfferStatus.PENDING)
-
-                try:
-                    response = xrpl_client.cancel_offers(
-                        buy_offer_ids=offers_to_cancel.values_list('buy_offer_id', flat=True),
-                    )
-                except Exception as e:
-                    logger.exception('Offer acceptance failed due to node exception', exc_info=e)
-                    return Response(
-                        data={'detail': 'Offer acceptance failed due to xrpl node exception'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    )
-
-                if response.result['meta']['TransactionResult'] != 'tesSUCCESS':
-                    return Response(
-                        data={'detail': f'Offer acceptance failed with {response.result["error_message"]}'},
-                        status=status.HTTP_502_BAD_GATEWAY,
-                    )
-
-                offers_to_cancel.update(
-                    updated_at=timezone.now(),
-                    status=OfferStatus.REJECTED,
-                    update_tx_hash=response.result['hash'],
-                )
+            if offer.listing:
+                with transaction.atomic():
+                    offers_to_cancel = Offer.objects.filter(listing=offer.listing, status=OfferStatus.PENDING)
+                    try:
+                        self.cancel_offers(offers_to_cancel)
+                    except Exception as e:
+                        logger.exception('An exception occurred', exc_info=e)
+                        return Response(
+                            data={'detail': 'Error occurred during offers cancellation after acceptance'},
+                            status=status.HTTP_502_BAD_GATEWAY,
+                        )
 
             return Response(data={'detail': 'Offer accepted successfully'}, status=status.HTTP_200_OK)
 
-        try:
-            response = xrpl_client.cancel_offers(buy_offer_ids=[offer.buy_offer_id])
-        except Exception as e:
-            logger.exception('Offer rejection failed due to node exception', exc_info=e)
-            return Response(
-                data={'detail': 'Offer rejection failed due to xrpl node exception'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        if response.result['meta']['TransactionResult'] != 'tesSUCCESS':
-            return Response(
-                data={'detail': f'Offer rejection failed with {response.result["error_message"]}'},
-                status=status.HTTP_502_BAD_GATEWAY,
-            )
-
-        offer.status = OfferStatus.REJECTED
-        offer.update_tx_hash = response.result['hash']
-        offer.save()
+        # can only be rejection.
+        self.reject_offers([offer])
         return Response(data={'detail': 'Offer rejected successfully'}, status=status.HTTP_200_OK)
