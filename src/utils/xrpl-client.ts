@@ -6,10 +6,14 @@ import {
 	NFTokenCancelOffer,
 	NFTokenCreateOffer,
 	Transaction,
+	TransactionMetadata,
+	TxResponse,
+	Wallet,
 	deriveAddress,
 	deriveKeypair,
 } from 'xrpl';
 import { Amount, NFTOffer } from 'xrpl/dist/npm/models/common';
+import { CreatedNode, Node } from 'xrpl/dist/npm/models/transactions/metadata';
 
 import configuration from '../config/config';
 import { NFTHistoryTxnsResponse, NFTInfoResponse, NFTOffersResponse } from '../interfaces';
@@ -67,7 +71,7 @@ class XrplClient {
 	 * @returns A Promise that resolves to the account information response.
 	 * @throws {Error} If there's an issue with the XRP Ledger client or the request.
 	 */
-	async getTransaction(txHash: string): Promise<Transaction> {
+	async getTransaction(txHash: string): Promise<TxResponse> {
 		try {
 			await this.connect();
 			const response = await this.client.request({
@@ -75,10 +79,24 @@ class XrplClient {
 				transaction: txHash,
 				ledger_index: 'validated',
 			});
-			return response.result;
+			return response;
 		} finally {
 			await this.disconnect();
 		}
+	}
+
+	async signAndSubmitTransactions(txns: Transaction[]): Promise<{ hash: string }[]> {
+		const processedTxns = await Promise.all(
+			txns.map(async (txn) => {
+				return (
+					await this.client.submitAndWait(txn, {
+						wallet: Wallet.fromSecret(configuration.XRPL_ACCOUNT_SECRET),
+					})
+				).result;
+			}),
+		);
+
+		return processedTxns;
 	}
 
 	/**
@@ -303,6 +321,17 @@ class XrplClient {
 			default:
 				return [];
 		}
+	}
+
+	parseNFTCreateOfferFromTxnMetadata(meta: TransactionMetadata): unknown {
+		const nftOfferMeta = meta.AffectedNodes.find((txnNode) => {
+			const coercedNode = txnNode as CreatedNode;
+			return (
+				coercedNode['CreatedNode'] && coercedNode['CreatedNode']['LedgerEntryType'] == 'NFTokenOffer'
+			);
+		}) as CreatedNode;
+
+		return { id: nftOfferMeta.CreatedNode.LedgerIndex, ...nftOfferMeta.CreatedNode.NewFields } as unknown;
 	}
 }
 

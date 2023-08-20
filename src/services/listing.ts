@@ -20,15 +20,26 @@ class ListingService {
 					{ creatorAddr: filters.creator },
 					{ createdAt: { lte: filters.listedAfter } },
 					{ createdAt: { gte: filters.listedBefore } },
+					{ nftId: filters.nftId },
+					{ type: filters.type },
 				],
 			},
 		});
 	}
 
-	async getByTokenId(tokenId: string): Promise<Listing[] | null> {
+	async getByTokenId(tokenId: string): Promise<Listing[]> {
 		return this.model.findMany({
 			where: {
 				nftId: tokenId,
+			},
+		});
+	}
+
+	async getPendingListings(): Promise<Listing[]> {
+		return this.model.findMany({
+			where: {
+				endAt: { lte: new Date() }, //filter based on timestamp
+				status: 'ONGOING',
 			},
 		});
 	}
@@ -51,6 +62,10 @@ class ListingService {
 
 	async cancelListing(id: string, txHash: string): Promise<Listing> {
 		return this.update(id, { status: 'CANCELLED', updateTxnHash: txHash });
+	}
+
+	async completeListing(id: string, txHash: string): Promise<Listing> {
+		return this.update(id, { status: 'COMPLETED', updateTxnHash: txHash });
 	}
 }
 

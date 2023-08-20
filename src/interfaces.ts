@@ -1,5 +1,5 @@
 import { Nft } from '@prisma/client';
-import { Transaction, TransactionMetadata } from 'xrpl';
+import { NFTokenCreateOffer, Transaction, TransactionMetadata } from 'xrpl';
 import { LedgerIndex, NFTOffer } from 'xrpl/dist/npm/models/common';
 import { BaseResponse } from 'xrpl/dist/npm/models/methods/baseMethod';
 
@@ -13,6 +13,9 @@ export interface NFTMetadata {
 interface NFTMetadataAttribute {
 	name: string;
 	value: string;
+}
+export interface NFTCreateOfferWithId extends NFTokenCreateOffer {
+	id: string;
 }
 
 export interface NFTHistoryTxnsResponse extends BaseResponse {
@@ -60,4 +63,18 @@ export interface ListingDBFilters {
 	creator?: string;
 	listedBefore?: Date;
 	listedAfter?: Date;
+	nftId?: string;
+	type?: 'REGULAR' | 'AUCTION';
+}
+
+export interface OfferDBFilters {
+	limit?: number;
+	offset?: number;
+	offeree?: string;
+	offeror?: string;
+	listing?: string;
+	offeredBefore?: Date;
+	offeredAfter?: Date;
+	nftId?: string;
+	status?: 'PENDING' | 'CANCELLED' | 'ACCEPTED' | 'REJECTED';
 }
