@@ -24,7 +24,6 @@ def monitor_auctions():
 
     for auction in ongoing_auctions:
         logger.info(f'Checking auction #{auction.id}')
-
         highest_offer = auction.offers.order_by('-amount').first()
         if highest_offer:
             logger.info(f'Highest offer for auction #{auction.id}: {highest_offer.amount}')

@@ -2,6 +2,8 @@ from xrpl.models.response import ResponseStatus
 from xrpl.utils import drops_to_xrp, ripple_time_to_datetime
 
 from django.conf import settings
+from django.db.models import CharField, Value
+from django.db.models.functions import Concat
 from django.utils import timezone
 
 from rest_framework import serializers
@@ -238,6 +240,23 @@ class NFTWithOffersSerializer(serializers.ModelSerializer):
     attributes = NFTAttributeSerializer(many=True)
     collection = MinimalCollectionSerializer()
     nft_offers = MinimalOfferSerializer(many=True)
+
+    def get_attributes(self, obj: NFT):
+        # Due to duplicates in attributes caused by data import and my poor schema modelling skills,
+        # this approach handles unique combinations without adding a unique constraint.
+        # Adding a unique constraint could break existing data, so this workaround is employed for now.
+        attrs = (
+            obj.attributes.all()
+            .annotate(
+                combined_attr=Concat('key', Value(':'), 'value', output_field=CharField()),
+            )
+            .values('combined_attr')
+            .distinct()
+        )
+        return [
+            {'key': attribute['combined_attr'].split(':')[0], 'value': attribute['combined_attr'].split(':')[1]}
+            for attribute in attrs
+        ]
 
     class Meta:
         model = NFT
