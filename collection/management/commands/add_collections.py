@@ -17,7 +17,7 @@ class Command(BaseCommand):
     help = 'Populate the database with initial collections and NFTs from OnXRP'  # noqa: A003
 
     nfts_per_page = 800
-    min_collections_threshold = 500
+    total_collections_in_csv = 1069
     onxrp_base_url = 'https://marketplace-api.onxrp.com/api'
 
     def handle(self, *args, **options):  # noqa: ARG002
@@ -30,8 +30,8 @@ class Command(BaseCommand):
 
     def load_collections(self):
         self.stdout.write('Loading collections from CSV...')
-        if Collection.objects.count() > self.min_collections_threshold:
-            self.stdout.write('Collection model contains > 500 entries. Not populating...')
+        if Collection.objects.count() >= self.total_collections_in_csv:
+            self.stdout.write('Collections model already populated. Moving on...')
             return
 
         collection_objs = []
@@ -57,30 +57,41 @@ class Command(BaseCommand):
             )
         Collection.objects.bulk_create(collection_objs, batch_size=50, ignore_conflicts=True)
 
-    @transaction.atomic
     def load_nfts(self):
         self.stdout.write('Fetching NFTs for collections...')
         for row in self.collections_from_csv:
-            collection = Collection.objects.get(issuer__address=row['Issuer'], taxon=int(row['Taxon']))
-            if collection.nft_set.count() == int(row['NftsCount']):
-                self.stdout.write(f'NFTs for collection {collection.id} already populated. Moving on...')
+            collection = Collection.objects.prefetch_related('nft_set').get(
+                issuer__address=row['Issuer'],
+                taxon=int(row['Taxon']),
+            )
+
+            if collection.nft_set.exists():
+                self.stdout.write(
+                    f'NFTs for collection onxrp_id={row["OnXrpID"]} '
+                    f'db={collection.id} already populated. Moving on...',
+                )
                 continue
 
             nfts = self.fetch_nfts_for_collection_from_onxrp(
+                collection_id=collection.id,
                 nfts_count=int(row['NftsCount']) + 1,
                 onxrp_id=row['OnXrpID'],
             )
-            self.add_nfts_to_database(collection, nfts)
+            self.add_nfts_to_database(row['OnXrpID'], collection, nfts)
 
-    def add_nfts_to_database(self, collection: Collection, nfts_response: list) -> None:
-        self.stdout.write(f'Adding NFTs for collection {collection.id} to the database...')
+    @transaction.atomic
+    def add_nfts_to_database(self, onxrp_id: str, collection: Collection, nfts_response: list) -> None:
+        self.stdout.write(f'Adding NFTs for collection onxrp_id={onxrp_id} db={collection.id} to the database...')
         nft_objs = []
         nfts_to_attributes = {}
         for entry in nfts_response:
-            owner, _ = Account.objects.get_or_create(
-                address=entry['owner']['wallet_id'],
-                defaults={'address': entry['owner']['wallet_id']},
-            )
+            owner = None
+            if entry.get('owner') is not None:
+                owner, _ = Account.objects.get_or_create(
+                    address=entry['owner']['wallet_id'],
+                    defaults={'address': entry['owner']['wallet_id']},
+                )
+
             nft_objs.append(
                 NFT(
                     owner=owner,
@@ -92,7 +103,7 @@ class Command(BaseCommand):
                     sequence=int(entry['serial']),
                     image_url=entry['picture_url'],
                     token_identifier=entry['token_id'],
-                    price=Decimal(entry['fixed_price']),
+                    price=Decimal(entry['fixed_price']) if entry['fixed_price'] is not None else Decimal('0'),
                 ),
             )
             nfts_to_attributes[entry['token_id']] = [
@@ -100,9 +111,11 @@ class Command(BaseCommand):
             ]
 
         NFT.objects.bulk_create(objs=nft_objs, batch_size=500, ignore_conflicts=True)
-        self.stdout.write(f'NFTs for collection {collection.id} added to the database.')
+        self.stdout.write(f'NFTs for collection onxrp_id={onxrp_id} db={collection.id} added to the database.')
 
-        self.stdout.write('Adding NFT attributes to the database...')
+        self.stdout.write(
+            f'Adding NFT attributes for collection onxrp_id={onxrp_id} db={collection.id} to the database...',
+        )
         for key, value in nfts_to_attributes.items():
             nft = NFT.objects.get(token_identifier=key)
             NFTAttribute.objects.bulk_create(
@@ -118,22 +131,30 @@ class Command(BaseCommand):
                 ignore_conflicts=True,
                 batch_size=500,
             )
-        self.stdout.write('NFT attributes added to the database.')
+        self.stdout.write(
+            f'NFT attributes for collection onxrp_id={onxrp_id} db={collection.id} added to the database.',
+        )
 
-    def fetch_nfts_for_collection_from_onxrp(self, nfts_count: int, onxrp_id: str):
+    def fetch_nfts_for_collection_from_onxrp(self, collection_id: int, nfts_count: int, onxrp_id: str):
         total_pages = (nfts_count + self.nfts_per_page - 1) // self.nfts_per_page
         all_nfts = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(self._fetch_nfts_page, onxrp_id, page) for page in range(1, total_pages + 1)]
+            futures = [
+                executor.submit(self._fetch_nfts_page, collection_id, onxrp_id, page)
+                for page in range(1, total_pages + 1)
+            ]
 
-            self.stdout.write(f'Waiting for {len(futures)} futures to complete...')
+            self.stdout.write(
+                f'Waiting for {len(futures)} futures of collection '
+                f'onxrp_id={onxrp_id} db={collection_id} to complete...',
+            )
             for future in concurrent.futures.as_completed(futures):
                 all_nfts.extend(future.result())
 
         return all_nfts
 
-    def _fetch_nfts_page(self, onxrp_id: str, page: int) -> list:
-        self.stdout.write(f'Fetching page {page} of nfts for collection: {onxrp_id}...')
+    def _fetch_nfts_page(self, collection_id: int, onxrp_id: str, page: int) -> list:
+        self.stdout.write(f'Fetching page {page} of nfts for collection onxrp_id={onxrp_id} db={collection_id}...')
         response = requests.get(
             f'{self.onxrp_base_url}/nfts',
             params={
@@ -142,14 +163,17 @@ class Command(BaseCommand):
                 'include': 'nftAttributes,owner',
                 'filters[collections]': onxrp_id,
             },
-            timeout=30,
+            timeout=120,
         )
 
         if response.ok:
-            self.stdout.write(f'Fetched {len(response.json()["data"])} nfts from page {page}')
+            self.stdout.write(
+                f'Fetched {len(response.json()["data"])} nfts collection '
+                f'onxrp_id={onxrp_id} db={collection_id} from page {page}',
+            )
             return response.json()['data']
 
-        self.stdout.write(f'Could not retrieve the nfts for collection: {onxrp_id}')
+        self.stdout.write(f'Could not retrieve the nfts for collection onxrp_id={onxrp_id} db={collection_id}')
         return []
 
     @functools.cached_property

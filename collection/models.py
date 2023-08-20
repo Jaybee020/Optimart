@@ -34,9 +34,15 @@ class NFT(models.Model):
     name = models.CharField('name', max_length=255, blank=False, null=False)
     token_identifier = models.CharField('token identifier', max_length=255, unique=True, blank=False, null=False)
     sequence = models.IntegerField('sequence', blank=False, null=False)
-    owner = models.ForeignKey('accounts.Account', on_delete=models.CASCADE, related_name='my_nfts')
+    owner = models.ForeignKey(
+        'accounts.Account',
+        on_delete=models.CASCADE,
+        related_name='my_nfts',
+        blank=True,
+        null=True,
+    )
     price = models.DecimalField('price', max_digits=24, decimal_places=6, blank=False, null=False)
-    uri = models.CharField('uri', max_length=255, blank=True, null=True)
+    uri = models.TextField('uri', blank=True, null=True)
     flags = models.IntegerField('flags', blank=False, null=False)
     image_url = models.URLField('image url', blank=True, null=True)
     status = models.CharField('status', max_length=8, choices=NFTStatus.choices, blank=False, null=False)
@@ -51,5 +57,5 @@ class NFTAttribute(models.Model):
         null=True,
     )
     nft = models.ForeignKey(NFT, related_name='nft_attributes', on_delete=models.CASCADE, blank=False, null=False)
-    key = models.CharField('key', db_index=True, max_length=255, blank=False, null=False)
-    value = models.CharField('value', max_length=255, blank=False, null=False)
+    key = models.TextField('key', db_index=True, blank=False, null=False)
+    value = models.TextField('value', db_index=True, blank=True, null=True)
