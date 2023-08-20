@@ -49,10 +49,18 @@ class ListingsAPIView(GenericAPIView, CreateModelMixin, ListModelMixin):
 
 
 class ListingAPIView(RetrieveDestroyAPIView):
-    queryset = Listing.objects.select_related('creator', 'nft__nft_attributes', 'nft__owner').prefetch_related(
+    queryset = Listing.objects.select_related('creator', 'nft__owner').prefetch_related(
         'offers__creator',
+        'nft__nft_attributes',
     )
-    permission_classes = (IsAuthenticated, IsListingOwner)
+
+    lookup_field = 'id'
+
+    def get_permissions(self):
+        if self.request.method == 'DELETE':
+            return [IsAuthenticated, IsListingOwner]
+
+        return super().get_permissions()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
