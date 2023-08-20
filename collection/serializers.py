@@ -37,7 +37,6 @@ class MinimalCollectionSerializer(serializers.ModelSerializer):
 
 class CollectionSerializer(serializers.ModelSerializer):
     issuer = AccountSerializer()
-    collection_attributes = NFTAttributeSerializer(many=True)
 
     class Meta:
         model = Collection
