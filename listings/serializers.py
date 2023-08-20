@@ -96,6 +96,7 @@ class CreateOfferSerializer(BaseNFTokenCreateOfferSerializer):
         tx_info = validated_data['tx_info']
 
         listing = None
+        nft = None
         if validated_data['listing_id'] is not None:
             try:
                 listing = Listing.objects.get(id=attrs['listing_id'])
@@ -106,20 +107,22 @@ class CreateOfferSerializer(BaseNFTokenCreateOfferSerializer):
                 raise serializers.ValidationError(
                     f'NFToken ID mismatch i.e. {tx_info["NFTokenID"]} != {listing.nft.token_identifier}',
                 )
+            nft = listing.nft
         else:
             try:
-                NFT.objects.get(token_identifier=tx_info['NFTokenID'])
+                nft = NFT.objects.get(token_identifier=tx_info['NFTokenID'])
             except NFT.DoesNotExist as e:
                 raise serializers.ValidationError(f'NFT {tx_info["NFTokenID"]} is not tracked by Optimart') from e
 
         if tx_info['Flags'] != 0:
             raise serializers.ValidationError(f'Invalid flags: {tx_info["Flags"]}')
 
-        validated_data.update({'listing': listing})
+        validated_data.update({'listing': listing, 'nft': nft})
         return validated_data
 
     def create(self, validated_data):
         offer = Offer(
+            nft=validated_data['nft'],
             status=OfferStatus.PENDING,
             listing=validated_data['listing'],
             creator=self.context['request'].user,
@@ -137,7 +140,7 @@ class CreateOfferSerializer(BaseNFTokenCreateOfferSerializer):
 
 class OfferSerializer(serializers.ModelSerializer):
     creator = AccountSerializer()
-    nft = NFTSerializer(source='listing.nft')
+    nft = NFTSerializer()
 
     class Meta:
         model = Offer

@@ -48,10 +48,10 @@ class XRPLClient:
             wallet=self.wallet,
         )
 
-    def cancel_offer(self, buy_offer_id: str) -> Response:
+    def cancel_offers(self, buy_offer_ids: list[str]) -> Response:
         tx = NFTokenCancelOffer(
             account=self.wallet.address,
-            nftoken_offers=[buy_offer_id],
+            nftoken_offers=buy_offer_ids,
         )
         return submit_and_wait(
             transaction=tx,
@@ -59,12 +59,12 @@ class XRPLClient:
             wallet=self.wallet,
         )
 
-    def accept_offer(self, buy_amount: Decimal, sell_offer_id: str, buy_offer_id: str) -> Response:
+    def accept_offer(self, buy_amount: Decimal, sell_offer_id: Optional[str], buy_offer_id: str) -> Response:
         tx = NFTokenAcceptOffer(
             account=self.wallet.address,
             nftoken_buy_offer=buy_offer_id,
             nftoken_sell_offer=sell_offer_id,
-            nftoken_broker_fee=self.get_broker_fee(buy_amount),
+            nftoken_broker_fee=self.get_broker_fee(buy_amount) if sell_offer_id is not None else None,
         )
         return submit_and_wait(transaction=tx, client=self.client, wallet=self.wallet)
 

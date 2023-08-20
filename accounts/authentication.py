@@ -1,7 +1,7 @@
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
-from services.xrpl import verify_signature
+from services.xrpl import XRPLClient
 
 from .models import Account
 
@@ -11,7 +11,7 @@ class XRPLWalletAuthentication(TokenAuthentication):
 
     def authenticate_credentials(self, key):
         try:
-            address, is_valid = verify_signature(key)
+            address, is_valid = XRPLClient.verify_signature(key)
         except Exception as e:  # noqa: BLE001
             raise AuthenticationFailed(f'Authentication failed due to {e!s}') from e
 

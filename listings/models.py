@@ -33,7 +33,8 @@ class Listing(models.Model):
     # holds the transaction hash for the NFTokenAcceptOffer/NFTokenCancelOffer
     update_tx_hash = models.CharField('update transaction hash', max_length=255, blank=True, null=True)
 
-    sell_offer_id = models.CharField('sell offer id', max_length=300, blank=False, null=False)
+    # The N/A is to make django migrations happy. See `nft` comment below.
+    sell_offer_id = models.CharField('sell offer id', max_length=300, blank=False, null=False, default='N/A')
 
     created_at = models.DateTimeField('created at', blank=False, null=False)
     updated_at = models.DateTimeField('updated at', auto_now=True)
@@ -43,6 +44,15 @@ class Listing(models.Model):
 
 
 class Offer(models.Model):
+    # NOTE: Ensure offers are not made without the nft.
+    # This is because I can't afford to re-run the data dump from onxrp
+    nft = models.ForeignKey(
+        'collection.NFT',
+        related_name='nft_offers',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
     listing = models.ForeignKey(Listing, related_name='offers', on_delete=models.CASCADE, blank=True, null=True)
     creator = models.ForeignKey(
         'accounts.Account',
@@ -58,7 +68,8 @@ class Offer(models.Model):
     # holds the transaction hash for the NFTokenAcceptOffer/NFTokenCancelOffer
     update_tx_hash = models.CharField('update transaction hash', max_length=255, blank=True, null=True)
 
-    buy_offer_id = models.CharField('buy offer id', max_length=300, blank=False, null=False)
+    # The N/A is to make django migrations happy. See `nft` comment.
+    buy_offer_id = models.CharField('buy offer id', max_length=300, blank=False, null=False, default='N/A')
 
     created_at = models.DateTimeField('created at', auto_now_add=True)
     updated_at = models.DateTimeField('updated at', auto_now=True)
