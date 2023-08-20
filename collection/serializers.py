@@ -18,7 +18,7 @@ class CollectionAttributesSerializer(serializers.ModelSerializer):
     attributes = serializers.SerializerMethodField()
 
     def get_attributes(self, obj: Collection):
-        # Due to duplicates in attributes caused by data import,
+        # Due to duplicates in attributes caused by data import and my poor schema modelling skills,
         # this approach handles unique combinations without adding a unique constraint.
         # Adding a unique constraint could break existing data, so this workaround is employed for now.
         attrs = (
