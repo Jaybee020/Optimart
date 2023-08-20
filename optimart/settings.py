@@ -19,13 +19,13 @@ from redis.connection import ConnectionPool
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-env = Env(DEBUG=(bool, True))
+env = Env()
 
 # ==============================================================================
 # CORE SETTINGS
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 # ==============================================================================
-DEBUG = env.bool('DEBUG')
+DEBUG = env.bool('DEBUG', default=True)
 if DEBUG:
     env.read_env(BASE_DIR / '.env.dev')
 
