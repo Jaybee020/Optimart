@@ -11,6 +11,14 @@ class NFTAttributeSerializer(serializers.ModelSerializer):
         fields = ('key', 'value')
 
 
+class CollectionAttributesSerializer(serializers.ModelSerializer):
+    attributes = NFTAttributeSerializer(many=True, source='collection_attributes')
+
+    class Meta:
+        model = Collection
+        fields = ('attributes',)
+
+
 class MinimalCollectionSerializer(serializers.ModelSerializer):
     issuer = AccountSerializer()
 
@@ -48,7 +56,6 @@ class CollectionSerializer(serializers.ModelSerializer):
             'discord_link',
             'instagram_link',
             'twitter_link',
-            'collection_attributes',
         )
 
 
