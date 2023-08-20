@@ -8,7 +8,7 @@ from rest_framework import serializers
 
 from accounts.serializers import AccountSerializer
 from collection.models import NFT, NFTStatus
-from collection.serializers import NFTSerializer
+from collection.serializers import MinimalCollectionSerializer, NFTAttributeSerializer, NFTSerializer
 from services.xrpl import XRPLClient
 
 from .enums import ListingStatus, ListingType, OfferStatus
@@ -215,3 +215,43 @@ class AcceptRejectOfferSerializer(serializers.Serializer):
             raise serializers.ValidationError('Only pending offers can be accepted or rejected')
 
         return {'offer': offer, 'action': attrs['action']}
+
+
+class MinimalOfferSerializer(serializers.ModelSerializer):
+    creator = AccountSerializer()
+
+    class Meta:
+        model = Offer
+        fields = (
+            'amount',
+            'creator',
+            'created_at',
+            'updated_at',
+            'create_tx_hash',
+            'update_tx_hash',
+            'status',
+        )
+
+
+class NFTWithOffersSerializer(serializers.ModelSerializer):
+    owner = AccountSerializer()
+    attributes = NFTAttributeSerializer(many=True)
+    collection = MinimalCollectionSerializer()
+    nft_offers = MinimalOfferSerializer(many=True)
+
+    class Meta:
+        model = NFT
+        fields = (
+            'name',
+            'collection',
+            'token_identifier',
+            'sequence',
+            'owner',
+            'price',
+            'uri',
+            'flags',
+            'nft_offers',
+            'image_url',
+            'status',
+            'attributes',
+        )

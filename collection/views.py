@@ -1,6 +1,8 @@
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 
+from listings.serializers import NFTWithOffersSerializer
+
 from .filters import NFTsFilter
 from .models import NFT, Collection
 from .serializers import CollectionAttributesSerializer, CollectionSerializer, NFTSerializer
@@ -51,8 +53,11 @@ class CollectionAPIView(RetrieveAPIView):
 
 
 class NFTAPIView(RetrieveAPIView):
-    queryset = NFT.objects.select_related('collection__issuer', 'owner').prefetch_related('attributes')
-    serializer_class = NFTSerializer
+    queryset = NFT.objects.select_related('collection__issuer', 'owner').prefetch_related(
+        'attributes',
+        'nft_offers__creator',
+    )
+    serializer_class = NFTWithOffersSerializer
     lookup_field = 'token_identifier'
 
 
