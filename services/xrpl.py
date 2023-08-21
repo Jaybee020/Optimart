@@ -11,8 +11,6 @@ from xrpl.transaction import submit_and_wait
 from xrpl.utils import datetime_to_ripple_time, xrp_to_drops
 from xrpl.wallet import Wallet
 
-client = JsonRpcClient('https://xrplcluster.com/')
-
 
 class XRPLClient:
     def __init__(self, url: str, seed: str):

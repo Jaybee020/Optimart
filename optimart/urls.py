@@ -14,7 +14,6 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from logging import getLogger
 
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
@@ -24,8 +23,6 @@ from django.http import JsonResponse
 from django.urls import include, path
 
 from rest_framework import permissions, status
-
-logger = getLogger(__name__)
 
 schema_view = get_schema_view(
     openapi.Info(
