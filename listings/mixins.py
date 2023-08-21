@@ -4,7 +4,6 @@ from collection.models import NFTStatus
 from services.xrpl import XRPLClient
 
 from .enums import ListingStatus, OfferStatus
-from .exceptions import OfferAcceptanceError, OfferCancellationError, OfferRejectionError
 from .tasks import notify_offer_accepted_and_sold
 
 xrpl_client = XRPLClient(
@@ -13,64 +12,86 @@ xrpl_client = XRPLClient(
 )
 
 
+class OfferActionError(Exception):
+    ...
+
+
 class OfferActionsMixin:
     @staticmethod
-    def cancel_offers(offers: list):
+    def _send_cancel_offer_request(buy_offer_ids):
         try:
-            response = xrpl_client.cancel_offers(buy_offer_ids=[x.buy_offer_id for x in offers])
+            return xrpl_client.cancel_offers(buy_offer_ids=buy_offer_ids)
         except Exception as e:  # noqa: BLE001
-            raise OfferCancellationError('Offer cancellation failed due to xrpl node exception') from e
+            raise OfferActionError('Offer action failed due to XRPL node exception') from e
+
+    @classmethod
+    def cancel_offers(cls, offers):
+        buy_offer_ids = [offer.buy_offer_id for offer in offers]
+        response = cls._send_cancel_offer_request(buy_offer_ids)
 
         if response.result['meta']['TransactionResult'] != 'tesSUCCESS':
-            raise OfferCancellationError(f'Offer cancellation failed with {response.result["error_message"]}')
+            raise OfferActionError(f'Offer cancellation failed with {response.result["error_message"]}')
 
         for offer in offers:
-            offer.status = OfferStatus.CANCELLED
-            offer.update_tx_hash = response.result['hash']
-            offer.save()
+            cls._update_offer_status(offer, OfferStatus.CANCELLED, response.result['hash'])
+
+    @classmethod
+    def accept_offer(cls, offer, sell_offer_tx=None):
+        cls._validate_offer_acceptance(offer, sell_offer_tx)
+        response = cls._send_accept_offer_request(offer, sell_offer_tx)
+        if response.result['meta']['TransactionResult'] != 'tesSUCCESS':
+            raise OfferActionError(f'Offer acceptance failed with {response.result["error_message"]}')
+
+        cls._update_offer_status(offer, OfferStatus.ACCEPTED, response.result['hash'])
+        if offer.listing:
+            cls._update_listing_status(offer.listing, ListingStatus.COMPLETED, response.result['hash'])
+
+        cls._update_nft_status(offer.nft, offer, NFTStatus.UNLISTED)
+        if offer.creator.email:
+            notify_offer_accepted_and_sold.schedule((offer.id,), delay=2)
 
     @staticmethod
-    def accept_offer(offer):
+    def _validate_offer_acceptance(offer, sell_offer_tx):
+        if offer.listing is None and sell_offer_tx is None:
+            raise OfferActionError('Cannot accept offer without providing a sell offer on chain')
+
+    @staticmethod
+    def _send_accept_offer_request(offer, sell_offer_tx):
+        sell_offer_id = offer.listing.sell_offer_id if offer.listing else sell_offer_tx['meta']['offer_id']
         try:
-            response = xrpl_client.accept_offer(
+            return xrpl_client.accept_offer(
                 buy_amount=offer.amount,
                 buy_offer_id=offer.buy_offer_id,
-                sell_offer_id=offer.listing.sell_offer_id if offer.listing is not None else None,
+                sell_offer_id=sell_offer_id,
             )
         except Exception as e:  # noqa: BLE001
-            raise OfferAcceptanceError('Offer acceptance failed due to xrpl node exception') from e
+            raise OfferActionError('Offer acceptance failed due to XRPL node exception') from e
+
+    @classmethod
+    def reject_offers(cls, offers):
+        buy_offer_ids = [offer.buy_offer_id for offer in offers]
+        response = cls._send_cancel_offer_request(buy_offer_ids)
 
         if response.result['meta']['TransactionResult'] != 'tesSUCCESS':
-            raise OfferAcceptanceError(f'Offer acceptance failed with {response.result["error_message"]}')
-
-        offer.status = OfferStatus.ACCEPTED
-        offer.update_tx_hash = response.result['hash']
-        if offer.listing:
-            offer.listing.status = ListingStatus.COMPLETED
-            offer.listing.update_tx_hash = response.result['hash']
-
-        offer.nft.owner = offer.creator
-        offer.nft.status = NFTStatus.UNLISTED
-        offer.listing.save()
-        offer.nft.save()
-        offer.save()
-
-        if not offer.creator.email:
-            return
-
-        notify_offer_accepted_and_sold.schedule((offer.id,), delay=2)
-
-    @staticmethod
-    def reject_offers(offers: list):
-        try:
-            response = xrpl_client.cancel_offers(buy_offer_ids=[x.buy_offer_id for x in offers])
-        except Exception as e:  # noqa: BLE001
-            raise OfferRejectionError('Offer rejection failed due to xrpl node exception') from e
-
-        if response.result['meta']['TransactionResult'] != 'tesSUCCESS':
-            raise OfferRejectionError(f'Offer rejection failed with {response.result["error_message"]}')
+            raise OfferActionError(f'Offer rejection failed with {response.result["error_message"]}')
 
         for offer in offers:
-            offer.status = OfferStatus.REJECTED
-            offer.update_tx_hash = response.result['hash']
-            offer.save()
+            cls._update_offer_status(offer, OfferStatus.REJECTED, response.result['hash'])
+
+    @staticmethod
+    def _update_offer_status(offer, new_status, tx_hash):
+        offer.status = new_status
+        offer.update_tx_hash = tx_hash
+        offer.save()
+
+    @staticmethod
+    def _update_listing_status(listing, new_status, tx_hash):
+        listing.status = new_status
+        listing.update_tx_hash = tx_hash
+        listing.save()
+
+    @staticmethod
+    def _update_nft_status(nft, offer, new_status):
+        nft.owner = offer.creator
+        nft.status = new_status
+        nft.save()

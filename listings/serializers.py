@@ -23,28 +23,33 @@ xrpl_client = XRPLClient(
 )
 
 
+def validate_xrpl_transaction(attrs, expected_type):
+    tx = xrpl_client.get_transaction(attrs['tx_hash'])
+    if tx.status == ResponseStatus.ERROR:
+        raise serializers.ValidationError(f'{tx.result["error_message"]}')
+
+    if tx.result['TransactionType'] != expected_type:
+        raise serializers.ValidationError(f'Invalid transaction type of {tx.result["TransactionType"]}')
+
+    if tx.result['Destination'] != xrpl_client.wallet.address:
+        raise serializers.ValidationError(f'Invalid destination address: {tx.result["Destination"]}')
+
+    ripple_expiration_ts = tx.result.get('Expiration')
+    if ripple_expiration_ts is not None and timezone.now() > ripple_time_to_datetime(ripple_expiration_ts):
+        raise serializers.ValidationError('Invalid expiration time set')
+
+    return tx.result
+
+
 class BaseNFTokenCreateOfferSerializer(serializers.Serializer):
     tx_hash = serializers.CharField(required=True)
 
     def validate(self, attrs):
-        tx = xrpl_client.get_transaction(attrs['tx_hash'])
-        if tx.status == ResponseStatus.ERROR:
-            raise serializers.ValidationError(f'{tx.result["error_message"]}')
-
-        if self.context['request'].user.address != tx.result['Account']:
+        tx_info = validate_xrpl_transaction(attrs, 'NFTokenCreateOffer')
+        if self.context['request'].user.address != tx_info['Account']:
             raise serializers.ValidationError('Provided transaction hash was not performed by authenticated user')
 
-        if tx.result['TransactionType'] != 'NFTokenCreateOffer':
-            raise serializers.ValidationError(f'Invalid transaction type of {tx.result["TransactionType"]}')
-
-        if tx.result['Destination'] != xrpl_client.wallet.address:
-            raise serializers.ValidationError(f'Invalid destination address: {tx.result["Destination"]}')
-
-        ripple_expiration_ts = tx.result.get('Expiration')
-        if ripple_expiration_ts is not None and timezone.now() > ripple_time_to_datetime(ripple_expiration_ts):
-            raise serializers.ValidationError('Invalid expiration time set')
-
-        return {'tx_info': tx.result}
+        return {'tx_info': tx_info}
 
 
 class CreateListingSerializer(BaseNFTokenCreateOfferSerializer):
@@ -57,7 +62,9 @@ class CreateListingSerializer(BaseNFTokenCreateOfferSerializer):
         try:
             nft = NFT.objects.get(token_identifier=tx_info['NFTokenID'])
         except NFT.DoesNotExist as e:
-            raise serializers.ValidationError(f'{e!s}') from e
+            raise serializers.ValidationError(
+                f'NFT with token ID {tx_info["NFTokenID"]} is not supported on Optimart',
+            ) from e
 
         if nft.listings.filter(status=ListingStatus.ONGOING).exists():
             raise serializers.ValidationError('Cancel ongoing listing before creating a new one')
@@ -91,7 +98,30 @@ class CreateListingSerializer(BaseNFTokenCreateOfferSerializer):
         return listing
 
 
-class CreateOfferSerializer(BaseNFTokenCreateOfferSerializer):
+class BaseOfferSerializerMixin:
+    @staticmethod
+    def _validate_transaction_flags(tx_info, expected_flags):
+        if tx_info['Flags'] != expected_flags:
+            raise serializers.ValidationError(f'Invalid flags: {tx_info["Flags"]}')
+
+    @staticmethod
+    def _validate_transaction_account(tx_info, user_address):
+        if user_address != tx_info['Account']:
+            raise serializers.ValidationError('Provided transaction hash was not performed by authenticated user')
+
+    @staticmethod
+    def _validate_transaction_destination(tx_info, expected_destination):
+        if tx_info['Destination'] != expected_destination:
+            raise serializers.ValidationError(f'Invalid destination address: {tx_info["Destination"]}')
+
+    @staticmethod
+    def _validate_transaction_expiration(tx_info):
+        ripple_expiration_ts = tx_info.get('Expiration')
+        if ripple_expiration_ts is not None and timezone.now() > ripple_time_to_datetime(ripple_expiration_ts):
+            raise serializers.ValidationError('Invalid expiration time set')
+
+
+class CreateOfferSerializer(BaseNFTokenCreateOfferSerializer, BaseOfferSerializerMixin):
     listing_id = serializers.IntegerField(required=False)
 
     def validate(self, attrs):
@@ -99,40 +129,60 @@ class CreateOfferSerializer(BaseNFTokenCreateOfferSerializer):
         tx_info = validated_data['tx_info']
 
         listing = None
-        nft = None
         if validated_data['listing_id'] is not None:
-            try:
-                listing = Listing.objects.get(id=attrs['listing_id'])
-            except Listing.DoesNotExist as e:
-                raise serializers.ValidationError(f'{e!s}') from e
-
-            if tx_info['NFTokenID'] != listing.nft.token_identifier:
-                raise serializers.ValidationError(
-                    f'NFToken ID mismatch i.e. {tx_info["NFTokenID"]} != {listing.nft.token_identifier}',
-                )
-
-            if listing.end_at is not None and listing.end_at >= timezone.now():
-                listing.status = ListingStatus.CANCELLED
-                listing.save()
-                raise serializers.ValidationError('Listing has expired')
-
-            if listing.listing_type == ListingType.AUCTION and drops_to_xrp(tx_info['amount']) < listing.price:
-                raise serializers.ValidationError('Auction bid must not be less than starting price')
-
-            nft = listing.nft
+            listing, nft = self._validate_listing_offer(tx_info, attrs['listing_id'])
         else:
-            try:
-                nft = NFT.objects.get(token_identifier=tx_info['NFTokenID'])
-            except NFT.DoesNotExist as e:
-                raise serializers.ValidationError(f'NFT {tx_info["NFTokenID"]} is not tracked by Optimart') from e
+            nft = self._validate_non_listing_offer(tx_info)
 
-        if tx_info['Flags'] != 0:
-            raise serializers.ValidationError(f'Invalid flags: {tx_info["Flags"]}')
-
+        self._validate_transaction_flags(tx_info, 0)
         validated_data.update({'listing': listing, 'nft': nft})
         return validated_data
 
     def create(self, validated_data):
+        return self._create_offer(validated_data)
+
+    def _validate_listing_offer(self, tx_info, listing_id):
+        try:
+            listing = Listing.objects.get(id=listing_id)
+        except Listing.DoesNotExist as e:
+            raise serializers.ValidationError(f'{e!s}') from e
+
+        self._validate_token_id_match(tx_info, listing.nft.token_identifier)
+        self._validate_listing_expiry(listing)
+        self._validate_auction_bid(tx_info, listing)
+
+        return listing, listing.nft
+
+    @staticmethod
+    def _validate_non_listing_offer(tx_info):
+        try:
+            nft = NFT.objects.get(token_identifier=tx_info['NFTokenID'])
+        except NFT.DoesNotExist as e:
+            raise serializers.ValidationError(f'NFT {tx_info["NFTokenID"]} is not tracked by Optimart') from e
+
+        return nft
+
+    @staticmethod
+    def _validate_token_id_match(tx_info, token_identifier):
+        if tx_info['NFTokenID'] != token_identifier:
+            raise serializers.ValidationError(
+                f'NFToken ID mismatch i.e. {tx_info["NFTokenID"]} != {token_identifier}',
+            )
+
+    @staticmethod
+    def _validate_listing_expiry(listing):
+        if listing.end_at is not None and listing.end_at >= timezone.now():
+            # convenient to do this here instead of a background job
+            listing.status = ListingStatus.CANCELLED
+            listing.save()
+            raise serializers.ValidationError('Listing has expired')
+
+    @staticmethod
+    def _validate_auction_bid(tx_info, listing):
+        if listing.listing_type == ListingType.AUCTION and drops_to_xrp(tx_info['amount']) < listing.price:
+            raise serializers.ValidationError('Auction bid must not be less than starting price')
+
+    def _create_offer(self, validated_data):
         offer = Offer(
             nft=validated_data['nft'],
             status=OfferStatus.PENDING,
@@ -148,7 +198,6 @@ class CreateOfferSerializer(BaseNFTokenCreateOfferSerializer):
 
         offer.save()
         notify_offer_received.schedule((offer.id,), delay=2)
-
         return offer
 
 
@@ -194,11 +243,17 @@ class ListingSerializer(serializers.ModelSerializer):
         )
 
 
-class AcceptRejectOfferSerializer(serializers.Serializer):
-    offer_id = serializers.IntegerField(required=True)
+class AcceptRejectOfferSerializer(serializers.Serializer, BaseOfferSerializerMixin):
     action = serializers.CharField(required=True)
+    offer_id = serializers.IntegerField(required=True)
+    sell_offer_tx_hash = serializers.CharField(required=False, default=None)
 
     def validate(self, attrs):
+        offer, sell_offer_tx = self._validate_offer(attrs)
+        self._validate_offer_action(attrs['action'], offer)
+        return {'offer': offer, 'action': attrs['action'], 'sell_offer_tx': sell_offer_tx}
+
+    def _validate_offer(self, attrs):
         try:
             offer = Offer.objects.select_related('listing__nft', 'creator').get(id=attrs['offer_id'])
         except Offer.DoesNotExist as e:
@@ -207,19 +262,33 @@ class AcceptRejectOfferSerializer(serializers.Serializer):
         if offer.listing.listing_type == ListingType.AUCTION:
             raise serializers.ValidationError('Offers cannot be accepted or rejected for auctions')
 
-        if attrs['action'] not in {'accept', 'reject'}:
+        sell_offer_tx = self._validate_accept_offer(attrs, offer) if attrs['action'] == 'accept' else None
+
+        return offer, sell_offer_tx
+
+    @staticmethod
+    def _validate_offer_action(action, offer):
+        if action not in {'accept', 'reject'}:
             raise serializers.ValidationError('Invalid action provided. Valid actions are: accept, reject.')
 
-        if (
-            attrs['action'] == 'accept'
-            and Offer.objects.filter(listing=offer.listing, status=OfferStatus.ACCEPTED).exists()
-        ):
+        if action == 'accept' and Offer.objects.filter(listing=offer.listing, status=OfferStatus.ACCEPTED).exists():
             raise serializers.ValidationError('An offer has already been accepted for this listing')
 
-        if offer.status != OfferStatus.PENDING:
-            raise serializers.ValidationError('Only pending offers can be accepted or rejected')
+    def _validate_accept_offer(self, attrs, offer):
+        if offer.listing is None and not attrs['sell_offer_tx_hash']:
+            raise serializers.ValidationError(
+                'To accept an offer made without listing, a sell offer has to be created',
+            )
 
-        return {'offer': offer, 'action': attrs['action']}
+        if offer.listing is None and attrs['sell_offer_tx_hash']:
+            tx_info = validate_xrpl_transaction(attrs, 'NFTokenCreateOffer')
+            self._validate_transaction_flags(tx_info, 1)
+            self._validate_transaction_account(tx_info, self.context['request'].user.address)
+            self._validate_transaction_destination(tx_info, xrpl_client.wallet.address)
+            self._validate_transaction_expiration(tx_info)
+            return tx_info
+
+        return None
 
 
 class MinimalOfferSerializer(serializers.ModelSerializer):

@@ -1,4 +1,4 @@
-from rest_framework.generics import CreateAPIView, GenericAPIView, RetrieveAPIView
+from rest_framework.generics import CreateAPIView, GenericAPIView, RetrieveUpdateAPIView
 
 from accounts.models import Account
 from accounts.serializers import AccountSerializer
@@ -14,7 +14,7 @@ class CreateAccountAPIView(CreateAPIView):
     serializer_class = AccountSerializer
 
 
-class AccountAPIView(RetrieveAPIView):
+class AccountAPIView(RetrieveUpdateAPIView):
     queryset = Account
     lookup_field = 'address'
     serializer_class = AccountSerializer

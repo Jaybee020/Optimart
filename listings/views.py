@@ -193,7 +193,7 @@ class OfferAPIView(GenericAPIView, RetrieveModelMixin, OfferActionsMixin):
         if serializer.data['action'] == 'accept':
             with transaction.atomic():
                 try:
-                    self.accept_offer(offer)
+                    self.accept_offer(offer, sell_offer_tx=serializer.data['sell_offer_tx'])
                 except Exception as e:
                     logger.exception('An exception occurred', exc_info=e)
                     return Response(
