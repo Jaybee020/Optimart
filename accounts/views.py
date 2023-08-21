@@ -1,5 +1,5 @@
-from rest_framework.exceptions import MethodNotAllowed
-from rest_framework.generics import CreateAPIView, GenericAPIView, RetrieveUpdateAPIView
+from rest_framework.generics import CreateAPIView, GenericAPIView, RetrieveAPIView
+from rest_framework.mixins import UpdateModelMixin
 
 from accounts.models import Account
 from accounts.serializers import AccountSerializer
@@ -15,10 +15,10 @@ class CreateAccountAPIView(CreateAPIView):
     serializer_class = AccountSerializer
 
 
-class AccountAPIView(RetrieveUpdateAPIView):
+class AccountAPIView(RetrieveAPIView, UpdateModelMixin):
     queryset = Account
     lookup_field = 'address'
     serializer_class = AccountSerializer
 
-    def put(self, request, *args, **kwargs):  # noqa: ARG002
-        raise MethodNotAllowed
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
