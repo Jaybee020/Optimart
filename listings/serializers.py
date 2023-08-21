@@ -309,7 +309,7 @@ class MinimalOfferSerializer(serializers.ModelSerializer):
 
 class NFTWithOffersSerializer(serializers.ModelSerializer):
     owner = AccountSerializer()
-    attributes = NFTAttributeSerializer(many=True)
+    attributes = serializers.SerializerMethodField()
     collection = MinimalCollectionSerializer()
     nft_offers = MinimalOfferSerializer(many=True)
 

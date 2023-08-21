@@ -80,7 +80,6 @@ class CollectionSerializer(serializers.ModelSerializer):
 
 class NFTSerializer(serializers.ModelSerializer):
     owner = AccountSerializer()
-    attributes = NFTAttributeSerializer(many=True)
     collection = MinimalCollectionSerializer()
 
     class Meta:
@@ -96,5 +95,4 @@ class NFTSerializer(serializers.ModelSerializer):
             'flags',
             'image_url',
             'status',
-            'attributes',
         )

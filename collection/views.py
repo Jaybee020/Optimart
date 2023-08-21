@@ -62,7 +62,7 @@ class NFTAPIView(RetrieveAPIView):
 
 
 class NFTsAPIView(ListAPIView):
-    queryset = NFT.objects.select_related('collection__issuer', 'owner').prefetch_related('attributes')
+    queryset = NFT.objects.select_related('collection__issuer', 'owner')
     serializer_class = NFTSerializer
     filterset_class = NFTsFilter
     ordering_fields = ('price', 'name')
