@@ -2,7 +2,7 @@
 name = "optimart-django"
 version = "0.1.0"
 description = ""
-authors = ["Isaac Adewumi <ienioladewumi@gmail.com>"]
+authors = ["Isaac Adewumi", "Lijadu Obafunmilayo", "Olayinka Ganiyu"]
 readme = "README.md"
 packages = []
 

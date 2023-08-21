@@ -29,12 +29,12 @@
 Demo goes here
 
 ## 🎯 Features
-<sup>[(Back to top)](#-demo)</sup>
+<sup>[(Back to top)](#------------------------)</sup>
 
 Features go here
 
 ## 🌵 Folder Structure
-<sup>[(Back to top)](#-demo)</sup>
+<sup>[(Back to top)](#------------------------)</sup>
 
 ```sh
 .
@@ -44,15 +44,15 @@ Features go here
 
 
 ## 📜 API Documentation
-<sup>[(Back to top)](#-demo)</sup>
+<sup>[(Back to top)](#------------------------)</sup>
 
 For in-depth API documentation, please refer to the following links:
 - [Swagger](https://optimart.up.railway.app/swagger)
-- [Redoc](https://optimart.up.railway.app/redoc))
+- [Redoc](https://optimart.up.railway.app/redoc)
 
 
 ## 👍 Contributing
-<sup>[(Back to top)](#-demo)</sup>
+<sup>[(Back to top)](#------------------------)</sup>
 
 We believe in the power of collaboration and welcome contributions from all members of the community irrespective of your domain knowledge and level of expertise, your input is valuable.
 Here are a few ways you can get involved:
@@ -63,7 +63,7 @@ Here are a few ways you can get involved:
 - **Bug Reports and Feedback**: If you encounter any issues or have suggestions for improvement, please open an issue on GitHub. Your feedback helps us maintain a high-quality marketplace experience.
 
 ## 👥 Team
-<sup>[(Back to top)](#-demo)</sup>
+<sup>[(Back to top)](#------------------------)</sup>
 
 Meet the creative minds who brought this project to life:
 
