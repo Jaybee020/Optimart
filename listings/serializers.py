@@ -10,7 +10,7 @@ from rest_framework import serializers
 
 from accounts.serializers import AccountSerializer
 from collection.models import NFT, NFTStatus
-from collection.serializers import MinimalCollectionSerializer, NFTAttributeSerializer, NFTSerializer
+from collection.serializers import MinimalCollectionSerializer, NFTSerializer
 from services.xrpl import XRPLClient
 
 from .enums import ListingStatus, ListingType, OfferStatus

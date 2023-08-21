@@ -1,3 +1,6 @@
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 
@@ -60,6 +63,10 @@ class NFTAPIView(RetrieveAPIView):
     serializer_class = NFTWithOffersSerializer
     lookup_field = 'token_identifier'
 
+    @method_decorator(cache_page(60 * 60 * 24))
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
 
 class NFTsAPIView(ListAPIView):
     queryset = NFT.objects.select_related('collection__issuer', 'owner')
@@ -67,3 +74,7 @@ class NFTsAPIView(ListAPIView):
     filterset_class = NFTsFilter
     ordering_fields = ('price', 'name')
     ordering = ('price',)
+
+    @method_decorator(cache_page(60 * 60 * 24))
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
