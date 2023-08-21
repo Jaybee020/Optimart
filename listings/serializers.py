@@ -15,6 +15,7 @@ from services.xrpl import XRPLClient
 
 from .enums import ListingStatus, ListingType, OfferStatus
 from .models import Listing, Offer
+from .tasks import notify_offer_received
 
 xrpl_client = XRPLClient(
     url=settings.XRPL_NODE_URL,
@@ -146,6 +147,8 @@ class CreateOfferSerializer(BaseNFTokenCreateOfferSerializer):
             offer.end_at = ripple_time_to_datetime(validated_data['tx_info']['Expiration'])
 
         offer.save()
+        notify_offer_received.schedule((offer.id,), delay=2)
+
         return offer
 
 

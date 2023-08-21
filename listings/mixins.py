@@ -1,25 +1,16 @@
 from django.conf import settings
 
 from collection.models import NFTStatus
-from listings.enums import ListingStatus, OfferStatus
 from services.xrpl import XRPLClient
+
+from .enums import ListingStatus, OfferStatus
+from .exceptions import OfferAcceptanceError, OfferCancellationError, OfferRejectionError
+from .tasks import notify_offer_accepted_and_sold
 
 xrpl_client = XRPLClient(
     url=settings.XRPL_NODE_URL,
     seed=settings.XRPL_WALLET_SEED,
 )
-
-
-class OfferCancellationError(Exception):
-    ...
-
-
-class OfferAcceptanceError(Exception):
-    ...
-
-
-class OfferRejectionError(Exception):
-    ...
 
 
 class OfferActionsMixin:
@@ -63,6 +54,11 @@ class OfferActionsMixin:
         offer.listing.save()
         offer.nft.save()
         offer.save()
+
+        if not offer.creator.email:
+            return
+
+        notify_offer_accepted_and_sold.schedule((offer.id,), delay=2)
 
     @staticmethod
     def reject_offers(offers: list):
