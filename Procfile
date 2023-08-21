@@ -1,3 +1,2 @@
-web: gunicorn optimart.wsgi --capture-output --log-level info --workers 3
+web: sh bootstrap.sh
 release: python manage.py migrate && python manage.py collectstatic --noinput
-worker: python manage.py run_huey
