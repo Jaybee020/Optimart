@@ -25,11 +25,10 @@ class NFTsFilter(filters.FilterSet, OrderingFilter):
     def filter_attributes(self, queryset, name, value):  # noqa: ARG002
         attribute_pairs = value.split(',')
         filters = {}
-
         for pair in attribute_pairs:
             key, val = pair.split(':')
             filters['attributes__key'] = key
-            filters['attributes__value'] = key
+            filters['attributes__value'] = val
 
         return queryset.filter(**filters)
 
