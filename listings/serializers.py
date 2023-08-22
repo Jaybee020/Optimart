@@ -357,6 +357,7 @@ class NFTWithOffersSerializer(serializers.ModelSerializer):
             'flags',
             'nft_offers',
             'image_url',
+            'ongoing_listing',
             'status',
             'attributes',
         )
