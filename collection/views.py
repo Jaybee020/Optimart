@@ -63,10 +63,6 @@ class NFTAPIView(RetrieveAPIView):
     serializer_class = NFTWithOffersSerializer
     lookup_field = 'token_identifier'
 
-    @method_decorator(cache_page(60 * 60 * 24))
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
 
 class NFTsAPIView(ListAPIView):
     queryset = NFT.objects.select_related('collection__issuer', 'owner')
