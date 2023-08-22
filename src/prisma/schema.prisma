@@ -32,6 +32,7 @@ model User {
   id      String  @id @default(cuid())
   email   String? @unique
   address String  @unique
+  profileUrl String?
 
   listings Listing[]
   auctions Auction[]
@@ -142,14 +143,18 @@ model Offer {
 
 model Collection {
   id           String @id @default(cuid())
-  name         String
+  name         String?
   taxon        Int
   issuer       String
-  description  String
+  description  String?
   // gotten from a combination of `issuer-taxon`
   collectionId String @unique
-  floorPrice Decimal @default(0)
-  createdAt DateTime? 
+  floorPrice   Decimal @default(0)
+  createdAt    DateTime? 
+  profileUrl   String?
+  bannerUrl    String?
+  instagram    String?
+  twitter      String?
 
   nfts Nft[]
 

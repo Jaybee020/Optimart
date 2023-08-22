@@ -13,7 +13,7 @@ import {
 	deriveKeypair,
 } from 'xrpl';
 import { Amount, NFTOffer } from 'xrpl/dist/npm/models/common';
-import { CreatedNode, Node } from 'xrpl/dist/npm/models/transactions/metadata';
+import { CreatedNode } from 'xrpl/dist/npm/models/transactions/metadata';
 
 import configuration from '../config/config';
 import { NFTHistoryTxnsResponse, NFTInfoResponse, NFTOffersResponse } from '../interfaces';

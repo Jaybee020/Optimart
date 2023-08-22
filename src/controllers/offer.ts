@@ -1,11 +1,11 @@
 import { ListingOffer } from '@prisma/client';
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
-import { NFTokenCancelOffer, NFTokenCreateOffer, TransactionMetadata, rippleTimeToUnixTime } from 'xrpl';
+import { TransactionMetadata, rippleTimeToUnixTime } from 'xrpl';
 
 import { configuration } from '../config';
 import { NFTCreateOfferWithId, OfferDBFilters } from '../interfaces';
-import { ListingOfferService, ListingService, OfferService, TokenService } from '../services';
+import { ListingOfferService, ListingService, TokenService } from '../services';
 import { NFTBroker, XrplClient, assert, pick } from '../utils';
 
 class OfferController {
@@ -23,6 +23,7 @@ class OfferController {
 			'offeree',
 			'offeror',
 			'listing',
+			'nftId',
 			'offeredBefore',
 			'offeredAfter',
 		]) as OfferDBFilters;
@@ -160,5 +161,8 @@ class OfferController {
 			});
 		}
 		await NFTBroker.acceptListingOffer(offerId);
+		res.status(httpStatus.NO_CONTENT).json();
 	}
 }
+
+export default new OfferController();

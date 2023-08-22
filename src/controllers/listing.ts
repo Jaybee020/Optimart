@@ -1,11 +1,9 @@
 import { Listing } from '@prisma/client';
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
-import { NFTokenCancelOffer, NFTokenCreateOffer, TransactionMetadata, rippleTimeToUnixTime } from 'xrpl';
 
-import { configuration } from '../config';
-import { ListingDBFilters, NFTCreateOfferWithId } from '../interfaces';
-import { ListingService, TokenService } from '../services';
+import { ListingDBFilters } from '../interfaces';
+import { ListingService } from '../services';
 import { XrplClient, assert, pick, NFTBroker } from '../utils';
 
 class ListingController {
@@ -34,6 +32,7 @@ class ListingController {
 
 		const listing = await NFTBroker.createListing(txHash, type, req.user?.address);
 		res.status(httpStatus.OK).json({ data: listing });
+
 		// todo: consider updating floor price of collection depending on listing price
 	}
 

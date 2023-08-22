@@ -28,6 +28,14 @@ class UserService {
 		}
 		return user;
 	}
+	async search(q: string, limit: number): Promise<User[]> {
+		return this.model.findMany({
+			take: limit,
+			where: {
+				OR: [{ address: { contains: q } }],
+			},
+		});
+	}
 }
 
 export default new UserService();

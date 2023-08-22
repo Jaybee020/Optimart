@@ -44,7 +44,7 @@ export interface NFTInfoResponse extends BaseResponse {
 }
 
 export interface CollectionTokensData {
-	name: string;
+	name: string | null;
 	nfts: Nft[];
 }
 

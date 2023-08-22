@@ -62,6 +62,17 @@ class CollectionService {
 			},
 		});
 	}
+
+	async getOrCreateCollection(id: string): Promise<Collection> {
+		const [issuer, taxon] = id.split('-');
+		return this.model.create({
+			data: {
+				issuer: issuer,
+				taxon: Number(taxon),
+				collectionId: id,
+			},
+		});
+	}
 }
 
 export default new CollectionService();

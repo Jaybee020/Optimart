@@ -29,6 +29,7 @@ class NftService {
 
 	async createByTokenId(id: string): Promise<Nft> {
 		const nftData = await XrplClient.getNFTInfo(id);
+		const collectionId = `${nftData.issuer}-${nftData.nft_taxon}`;
 		const metadata = await NFTMetadataService.resolveNFTMetadata(id, nftData.uri, nftData.issuer);
 		return this.create({
 			tokenId: id,
@@ -37,6 +38,18 @@ class NftService {
 			attributes: JSON.stringify(metadata.attributes),
 			uri: nftData.uri,
 			imageUrl: metadata.imageUrl,
+			collection: {
+				connectOrCreate: {
+					where: {
+						id: collectionId,
+					},
+					create: {
+						collectionId: collectionId,
+						issuer: nftData.issuer,
+						taxon: nftData.nft_taxon,
+					},
+				},
+			},
 		});
 	}
 
