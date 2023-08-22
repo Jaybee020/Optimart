@@ -27,7 +27,8 @@
 
 ## 🎥 Demo
 
-Demo goes here
+[![Watch the video](https://img.youtube.com/vi/zV8lfBa39q8/maxresdefault.jpg)](https://youtu.be/zV8lfBa39q8)
+
 
 ## 🎯 Features
 <sup>[(Back to top)](#------------------------)</sup>
