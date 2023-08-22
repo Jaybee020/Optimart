@@ -1,7 +1,8 @@
-.idea
+../../.idea
 *.iml
 out
 gen
+.env
 .DS_Store
 .AppleDouble
 .LSOverride
@@ -78,7 +79,7 @@ __pypackages__/
 celerybeat-schedule
 celerybeat.pid
 *.sage.py
-.env
+backend/.env
 .venv
 env/
 venv/
