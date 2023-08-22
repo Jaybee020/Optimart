@@ -311,7 +311,21 @@ class NFTWithOffersSerializer(serializers.ModelSerializer):
     owner = AccountSerializer()
     attributes = serializers.SerializerMethodField()
     collection = MinimalCollectionSerializer()
+    ongoing_listing = serializers.SerializerMethodField()
     nft_offers = MinimalOfferSerializer(many=True)
+
+    def get_ongoing_listing(self, obj: NFT):
+        ongoing_listing = obj.listings.select_related('creator').filter(status=ListingStatus.ONGOING).first()
+        if ongoing_listing is None:
+            return None
+
+        return {
+            'id': ongoing_listing.id,
+            'price': ongoing_listing.price,
+            'end_at': ongoing_listing.end_at,
+            'type': ongoing_listing.listing_type,
+            'creator': ongoing_listing.creator.address,
+        }
 
     def get_attributes(self, obj: NFT):
         # Due to duplicates in attributes caused by data import and my poor schema modelling skills,
