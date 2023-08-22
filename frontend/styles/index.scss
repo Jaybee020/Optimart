@@ -1,0 +1,38 @@
+@import "@szhsin/react-menu/dist/index.css";
+@import "@szhsin/react-menu/dist/transitions/slide.css";
+
+@import "utils/breakpoints";
+@import "utils/mixins";
+@import "utils/functions";
+
+@import "core/variables.module";
+@import "core/reset";
+@import "common/typography";
+
+@import "core/globals";
+
+@import "common/partials";
+@import "common/sections";
+
+// Components
+@import "components/header";
+@import "components/appmenu";
+@import "components/appmodal";
+@import "components/navbar";
+@import "components/buttons";
+@import "components/calender";
+@import "components/searchbar";
+@import "components/tabswitch";
+@import "components/table";
+@import "components/accordion";
+@import "components/main-footer";
+@import "components/components";
+
+@import "components/filter-sidebar";
+
+// Pages
+@import "pages/home";
+@import "pages/featured";
+@import "pages/nft-details";
+@import "pages/profile";
+@import "pages/collections";

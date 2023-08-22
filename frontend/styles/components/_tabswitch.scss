@@ -1,0 +1,48 @@
+.tabswitch {
+  @extend %row-center;
+  flex: none;
+  padding: 3.2px;
+  overflow: hidden;
+  position: relative;
+  border-radius: 10px;
+  background: var(--neutral-150);
+  &.sticky {
+    top: 0;
+    left: 0;
+    position: sticky;
+    z-index: z("nav");
+  }
+
+  button {
+    @extend %row-middle;
+    flex: none;
+    z-index: 2;
+    height: 40px;
+    font-size: 13px;
+    // min-width: 120px;
+    font-weight: 500;
+    padding: 0px 22px;
+    border-radius: 7px;
+    color: var(--neutral-700);
+    &.active {
+      color: var(--black);
+      background: var(--white);
+    }
+    &.responsive {
+      min-width: 42px;
+      padding: 0px 14px;
+    }
+  }
+
+  .active-tab {
+    height: 40px;
+    width: 200px;
+    border-radius: 7px;
+    position: absolute;
+    transition: all 0.3s;
+    background: var(--white);
+    &.responsive {
+      width: 42px;
+    }
+  }
+}

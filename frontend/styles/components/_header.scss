@@ -1,0 +1,100 @@
+header {
+  @extend %row-middle;
+  width: 100%;
+  // overflow: hidden;
+  padding: 12px 30px;
+  height: $headerHeight;
+
+  top: 0px;
+  left: 0px;
+  position: fixed;
+  z-index: z("nav");
+  background: var(--white);
+  border-bottom: $border-200;
+  // background: #f6f6f6;
+
+  .header-content {
+    @extend %row-spaced-center;
+    max-width: 92vw;
+    width: $maxWidth;
+
+    .header-configs {
+      @extend %row-center;
+      gap: 8px;
+
+      .wallet-connect-btn {
+        @extend %body-14;
+        @extend %row-middle;
+        height: 40px;
+        margin-right: 8px;
+        padding: 0px 20px;
+        border-radius: 40px;
+        color: var(--white);
+        background: var(--primary-600);
+        background: var(--black);
+      }
+
+      .dropdowns {
+        @extend %row-center;
+        border-radius: 8px;
+        border: $border-100;
+        @include tablet {
+          border: none !important;
+        }
+        button {
+          @extend %row-middle;
+          gap: 8px;
+          height: 36px;
+          font-size: 11px;
+          padding: 0px 11px;
+          color: var(--neutral-700);
+          text-transform: uppercase;
+
+          svg {
+            margin-top: -1.8px;
+          }
+          &.account {
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: none;
+            .avatar {
+              flex: none;
+              height: 24px;
+              aspect-ratio: 1;
+              overflow: hidden;
+              margin-right: 4px;
+              border-radius: 50%;
+              img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+              }
+            }
+            @include tablet {
+              padding: 0px 6px !important;
+              .avatar {
+                aspect-ratio: 1;
+                margin-right: 0px;
+                height: max(90%, 34px);
+              }
+            }
+          }
+        }
+      }
+
+      .menu-button {
+        @extend %row-middle;
+        height: 38px;
+        aspect-ratio: 1;
+        font-size: 11px;
+        min-width: 38px;
+        border-radius: 10px;
+        border: $border-100;
+        color: var(--neutral-700);
+        svg {
+          margin-top: -1px;
+        }
+      }
+    }
+  }
+}

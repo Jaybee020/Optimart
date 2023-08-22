@@ -1,0 +1,220 @@
+.c-table {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  flex-direction: column;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  &-bottom {
+    @extend %row-middle;
+    width: 100%;
+    margin-top: 34px;
+  }
+
+  &-header {
+    z-index: 1;
+    position: relative;
+    margin-bottom: 20px;
+    background: var(--white);
+    flex-direction: column;
+
+    margin-top: clamp(40px, 5vw, 96px);
+
+    &.full-page {
+      top: 64px;
+      left: 0px;
+      margin-top: 36px;
+      position: sticky;
+      padding-top: 18px;
+      margin-bottom: 5px;
+      padding-bottom: 0px;
+      background: var(--white);
+      .inner {
+        margin-bottom: 20px;
+      }
+    }
+
+    .inner {
+      @extend %row-spaced-center;
+      gap: 24px;
+      width: 100%;
+      .timeframes {
+        @extend %row-middle;
+        overflow: hidden;
+        border-radius: 10px;
+        border: $border-200;
+        button {
+          @extend %row-middle;
+          width: 54px;
+          height: 48px;
+          font-size: 13px;
+          font-weight: 500;
+          color: var(--neutral-700);
+          &:not(:last-child) {
+            border-right: $border-200;
+          }
+          &.active {
+            color: var(--black);
+            background: var(--neutral-100);
+          }
+        }
+      }
+    }
+  }
+
+  &__row {
+    padding: 16px 0px;
+    color: var(--black);
+    display: grid !important;
+    grid-template-columns: minmax(0px, 1.5fr) repeat(4, 1fr);
+
+    &.collection-list-items {
+      padding: 11px 0px;
+      grid-template-columns: minmax(0px, 2fr) repeat(4, 1fr);
+    }
+
+    &.profile-list-items {
+      padding: 11px 0px;
+      grid-template-columns: minmax(0px, 1.7fr) repeat(4, 1fr);
+    }
+
+    &.mobile-table {
+      grid-template-columns: minmax(0px, 2fr) repeat(2, 1fr);
+    }
+
+    &.profile-activity-tab {
+      padding: 11px 0px;
+      grid-template-columns: repeat(1, 1fr) minmax(0px, 1.7fr) repeat(3, 1fr);
+    }
+
+    &.labels {
+      padding: 10px 0px;
+      color: var(--neutral-700);
+      border-bottom: $border-200;
+      &.full-page {
+        padding: 10px 0px 13px;
+      }
+    }
+    &:not(.labels) {
+      cursor: pointer;
+      &:hover {
+        background-color: var(--neutral-100);
+      }
+    }
+
+    &-cell {
+      @extend %body-14;
+      gap: 4px;
+      display: flex;
+      font-weight: 500;
+      text-align: right;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      text-transform: capitalize;
+
+      p {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      &:first-child {
+        text-align: left;
+        justify-content: flex-start;
+      }
+
+      .details {
+        gap: 10px;
+        height: max-content;
+        flex-direction: row;
+        &__icon {
+          @extend %row-middle;
+          flex: none;
+          width: 26px;
+          height: 26px;
+          border-radius: 20px;
+          border: $border-100;
+        }
+        &__text {
+          gap: 6px;
+          font-size: 13px;
+          color: var(--black);
+          padding-bottom: 1px;
+          letter-spacing: 0.3px;
+          flex-direction: column;
+          text-transform: capitalize;
+          .label {
+            font-size: 12px;
+            color: var(--neutral-700);
+            text-transform: uppercase;
+          }
+        }
+      }
+
+      .txn-details {
+        @extend %row-center;
+        gap: 6px;
+        align-items: flex-end;
+        flex-direction: column;
+        &__item {
+          flex: 1;
+          gap: 8px;
+          font-size: 12px;
+          padding-bottom: 1px;
+          .label {
+            font-size: 12px;
+            color: var(--neutral-700);
+            text-transform: capitalize;
+          }
+        }
+      }
+
+      &.listed-cell {
+        padding-right: 4px;
+      }
+      // &.rank-cell {
+      //   text-align: center;
+      //   justify-content: center;
+      // }
+      &.collection-cell {
+        gap: 16px;
+        text-align: left;
+        justify-content: flex-start;
+        img {
+          width: 36px;
+          height: 36px;
+          object-fit: cover;
+          border-radius: 6px;
+        }
+
+        &.nft-list-cell {
+          padding-left: 4px;
+        }
+        &.nft-list-header {
+          padding-left: 20px;
+        }
+
+        .nft-rank {
+          flex: none;
+          width: 48px;
+          font-size: 13px;
+          text-align: center;
+        }
+      }
+      &.actions-cell {
+        padding-right: 10px;
+        .btn-square {
+          @extend %row-middle;
+          width: 30px;
+          height: 30px;
+          border-radius: 6px;
+          border: $border-200;
+        }
+      }
+    }
+  }
+}

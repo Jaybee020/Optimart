@@ -1,0 +1,139 @@
+.accordion {
+  gap: 24px;
+  display: flex;
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  border-radius: 8px;
+  flex-direction: column;
+
+  @include phone {
+    gap: 16px;
+  }
+
+  &-item {
+    display: flex;
+    overflow: hidden;
+    border-radius: 8px;
+    border: $border-200;
+    flex-direction: column;
+    &-header {
+      gap: 11px;
+      display: flex;
+      align-items: center;
+      flex-direction: row;
+    }
+  }
+
+  &-button {
+    margin: 0;
+    width: 100%;
+    border: none;
+    display: flex;
+    cursor: pointer;
+    font-size: 15px;
+    text-align: left;
+    font-weight: 500;
+    padding: 14px 16px;
+    color: var(--black);
+    align-items: center;
+    letter-spacing: 0.4px;
+    justify-content: space-between;
+    background-color: var(--neutral-150);
+    &:hover {
+      background-color: #f3f3f3;
+    }
+    .chevron {
+      margin-left: auto;
+      transition: transform 0.25s cubic-bezier(0, 0, 0, 1);
+    }
+    &-expanded {
+      .chevron {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  &-content {
+    display: flex;
+    max-height: 334px;
+    flex-direction: column;
+    overflow: hidden scroll;
+    transition: height 0.25s cubic-bezier(0, 0, 0, 1);
+  }
+  &-panel {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.accordion-body {
+  display: flex;
+  padding: 14px 20px;
+  flex-direction: column;
+  &__list-item {
+    @extend %row-spaced-center;
+    gap: 40px;
+    font-size: 13px;
+    padding: 10px 0px;
+    color: var(--black);
+    align-items: flex-start;
+    text-transform: capitalize;
+    &:first-child {
+      padding-top: 0px !important;
+    }
+    &:last-child {
+      padding-bottom: 0px !important;
+    }
+    .label {
+      white-space: nowrap;
+      color: var(--neutral-700);
+    }
+    p {
+      flex-wrap: wrap;
+      text-align: center;
+      word-break: break-all;
+    }
+  }
+}
+
+.accordion-table {
+  display: flex;
+  padding-bottom: 6px;
+  flex-direction: column;
+  &__row {
+    grid-gap: 14px;
+    padding: 12px 20px;
+    color: var(--black);
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    &.offers {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    &:not(:last-child) {
+      border-bottom: $border-200;
+    }
+
+    &-cell {
+      gap: 6px;
+      font-size: 13px;
+      flex-direction: column;
+      text-transform: capitalize;
+      .label {
+        color: var(--neutral-700);
+      }
+      &:not(:first-child) {
+        align-items: center;
+      }
+      &:last-child {
+        align-items: flex-end;
+      }
+    }
+
+    &.header {
+      color: var(--neutral-700);
+      text-transform: capitalize;
+    }
+  }
+}

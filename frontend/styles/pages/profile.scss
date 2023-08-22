@@ -1,0 +1,137 @@
+.profile {
+  &-tabs {
+    @extend %row-center;
+    left: 0px;
+    z-index: 3;
+    width: 100%;
+    margin-top: 20px;
+    position: sticky;
+    top: $headerHeight;
+    padding: 16px 0px 10px;
+    background-color: var(--white);
+    transition: all 0.2s ease-in-out;
+
+    &__container {
+      @extend %row-center;
+    }
+    &--tab {
+      @extend %body-16;
+      @extend %row-middle;
+      gap: 10px;
+      cursor: pointer;
+      font-weight: 500;
+      padding: 10px 22px;
+      border-radius: 8px;
+      color: var(--neutral-700);
+      transition: all 0.3s ease;
+      text-transform: capitalize;
+      &[data-active="true"] {
+        background-color: var(--neutral-100);
+        color: var(--black);
+      }
+    }
+  }
+
+  &-header {
+    &__banner {
+      &--dp {
+        flex: none !important;
+        border-radius: 100% !important;
+        border-width: 2px !important;
+      }
+    }
+
+    &__content {
+      padding: 20px clamp(20px, 4vw, 50px) 0px !important;
+
+      &--details {
+        @extend %row-spaced;
+        gap: 10px 0px !important;
+        flex-wrap: wrap;
+        flex-direction: column !important;
+
+        .profile-info {
+          gap: 14px 0px;
+          flex-direction: column;
+
+          .name {
+            @extend %row-center;
+            gap: 8px;
+            font-weight: 500;
+            height: max-content;
+            color: var(--black);
+            letter-spacing: 1.1px;
+            font-size: calc(max(3.3rem, 25px));
+            p {
+              line-height: 1;
+            }
+
+            @include tablet {
+              font-weight: 500;
+              letter-spacing: 0.7px;
+            }
+            @include phone {
+              letter-spacing: 0.3px;
+            }
+          }
+          .media {
+            @extend %body-14;
+            gap: 0px 36px !important;
+            flex-wrap: wrap;
+            flex-direction: row;
+            .user-address {
+              @extend %row-center;
+              gap: 10px;
+              font-size: 16px;
+            }
+            &-block {
+              @extend %row-center;
+              gap: 14px;
+              p {
+                span {
+                  font-weight: 500;
+                  color: var(--black);
+                }
+              }
+            }
+
+            @include phone {
+              gap: 10px 26px !important;
+            }
+          }
+        }
+      }
+
+      &--description {
+        @extend %row-center;
+        width: 1022px;
+        @extend %body-16;
+        max-width: 100%;
+        line-height: 1.65;
+        color: var(--neutral-700);
+        @include phone {
+          margin-top: 3px;
+        }
+      }
+    }
+  }
+
+  &-body {
+    &__header {
+      margin-top: 10px;
+      padding: 10px 0px 20px !important;
+      top: $headerHeight + 65px !important;
+      height: $collectionHeader - 30px !important;
+
+      // border-bottom: $border-200;
+
+      @include laptop {
+        gap: 10px;
+        margin-top: 0px;
+        padding: 20px 0px;
+        top: $headerHeight + 62 !important;
+        height: $collectionHeader - 20px;
+      }
+    }
+  }
+}
